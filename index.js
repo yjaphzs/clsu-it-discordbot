@@ -18,6 +18,7 @@ const {
     Client,
     GatewayIntentBits,
     PermissionsBitField,
+    MessageFlags,
 } = require("discord.js");
 
 // Initialize the Discord client with necessary intents
@@ -122,7 +123,7 @@ client.on("interactionCreate", async (interaction) => {
     ) {
         return interaction.reply({
             content: "You don't have permission to use this command.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
 
@@ -130,7 +131,7 @@ client.on("interactionCreate", async (interaction) => {
     if (!guild)
         return interaction.reply({
             content: "Guild not found.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
 
     // List of role IDs in promotion order
@@ -196,7 +197,7 @@ client.on("interactionCreate", async (interaction) => {
         if (!member) {
             return interaction.editReply({
                 content: "User not found.",
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
         const promoted = await promoteMember(member);
@@ -228,7 +229,7 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.editReply({
         content:
             "Invalid argument. Use `all`, `@user`, or a role name/mention/ID.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
     });
 });
 
@@ -245,7 +246,7 @@ client.on("interactionCreate", async (interaction) => {
     ) {
         return interaction.reply({
             content: "You don't have permission to use this command.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
 
@@ -253,7 +254,7 @@ client.on("interactionCreate", async (interaction) => {
     if (!guild) {
         return interaction.reply({
             content: "Guild not found.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
 
@@ -280,7 +281,7 @@ client.on("interactionCreate", async (interaction) => {
     // Send the summary as an ephemeral message (only visible to the user)
     await interaction.reply({
         content: result,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
     });
 });
 
