@@ -133,8 +133,19 @@ client.on('interactionCreate', async interaction => {
   // Get the target argument from the slash command
   const target = interaction.options.getString('target');
 
+  const UNVERIFIED_ROLE_ID = "1276428966454104172";
+  const INTRODUCED_ROLE_ID = "1280119205429117079";
+
   // Helper function to promote a member to the next year
   async function promoteMember(member) {
+    // Do not promote if user has unverified or does not have introduced role
+    if (
+      member.roles.cache.has(UNVERIFIED_ROLE_ID) ||
+      !member.roles.cache.has(INTRODUCED_ROLE_ID)
+    ) {
+      return false;
+    }
+
     for (let i = roles.length - 2; i >= 0; i--) {
       if (member.roles.cache.has(roles[i].id)) {
         await member.roles.remove(roles[i].id);
