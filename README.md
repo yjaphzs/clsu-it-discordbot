@@ -1,3 +1,5 @@
+![2321312er](https://github.com/user-attachments/assets/5095574d-9965-45eb-8eef-136210f309b2)
+
 # CLSU IT Discord Role Promotion Bot
 
 A Discord bot for the CLSU IT community that helps moderators and admins promote users’ year-level roles efficiently.  
