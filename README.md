@@ -1,4 +1,4 @@
-![2321312er](https://github.com/user-attachments/assets/5095574d-9965-45eb-8eef-136210f309b2)
+![server-bannerlong](https://github.com/user-attachments/assets/7b6cce34-afac-416f-ac27-9214e761f380)
 
 # CLSU IT Discord Role Promotion Bot
 
