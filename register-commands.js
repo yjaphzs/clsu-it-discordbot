@@ -15,6 +15,11 @@ const commands = [
         .setDescription('Specify "all", @user, or a role name')
         .setRequired(true)
     )
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('listyearlevels')
+    .setDescription('List all members per year level')
     .toJSON()
 ];
 
