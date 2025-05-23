@@ -50,7 +50,7 @@ client.on("interactionCreate", async (interaction) => {
     ) {
         return interaction.reply({
             content:
-                "⛔ **Access Denied!**\n\nYou need to be an Administrator to use this command.\n\nIf you believe this is a mistake, please contact a server admin. 🔒",
+                "**Access Denied!**\n\nYou need to be an Administrator to use this command.\n\nIf you believe this is a mistake, please contact a server admin. ⛔",
             flags: MessageFlags.Ephemeral,
         });
     }
@@ -59,7 +59,7 @@ client.on("interactionCreate", async (interaction) => {
     if (!guild)
         return interaction.reply({
             content:
-                "❌ **Guild Not Found!**\n\nIt looks like I can't find the server information right now. Please try again later or contact an administrator if this issue persists. 🛠️",
+                "**Guild Not Found!**\n\nIt looks like I can't find the server information right now. Please try again later or contact an administrator if this issue persists. ❌",
             flags: MessageFlags.Ephemeral,
         });
 
@@ -152,7 +152,7 @@ client.on("interactionCreate", async (interaction) => {
             const channel = guild.channels.cache.get(channelId);
             if (channel && channel.isTextBased()) {
                 await channel.send(
-                    `:tada: **A Fresh Start!** :tada:\n` +
+                    `**A Fresh Start!** :tada:\n` +
                         `Welcome, **${name}** students, to a brand new academic year! 🎓\n\n` +
                         `This channel is now your official hangout for all things ${name}.\n` +
                         `Feel free to introduce yourselves, ask questions, and support each other as you journey through this year together.\n\n` +
@@ -163,7 +163,7 @@ client.on("interactionCreate", async (interaction) => {
         }
         // Send a summary message to the command invoker
         return interaction.editReply(
-            `🎉 **Promotion Complete!** 🎉\n\n` +
+            `**Promotion Complete!** 🎉\n\n` +
                 `A total of **${count} members** have been promoted to their next year level!\n\n` +
                 `All year level channels have been notified and are ready for a fresh start. ` +
                 `Let's make this academic year the best one yet—good luck and have fun, everyone! 🚀`
@@ -178,7 +178,7 @@ client.on("interactionCreate", async (interaction) => {
         if (!member) {
             return interaction.editReply({
                 content:
-                    "🔍 **User Not Found!**\n\nI couldn't find that user in the server. Please double-check the mention or ID and try again! If you think this is an error, make sure the user is still a member of the server. 👤",
+                    "**User Not Found!**\n\nI couldn't find that user in the server. Please double-check the mention or ID and try again! If you think this is an error, make sure the user is still a member of the server. 🔍",
                 flags: MessageFlags.Ephemeral,
             });
         }
@@ -186,8 +186,8 @@ client.on("interactionCreate", async (interaction) => {
         // Reply with a success or failure message
         return interaction.editReply(
             promoted
-                ? `🌟 **Success!** ${member.user.tag} has leveled up to the next year! 🎓 Give them a warm welcome and wish them luck on their new journey!`
-                : `⚠️ ${member.user.tag} could not be promoted. They may already be at the highest year level or do not meet the requirements.`
+                ? `**Success!** <@${member.user.id}> has leveled up to the next year! 🎓 Give them a warm welcome and wish them luck on their new journey! 🌟`
+                : `<@${member.user.id}> could not be promoted. They may already be at the highest year level or do not meet the requirements. ⚠️`
         );
     }
 
@@ -205,8 +205,8 @@ client.on("interactionCreate", async (interaction) => {
         }
         // Send a summary message to the command invoker
         return interaction.editReply(
-            `🎓 **Promotion Success!** 🎓\n\n` +
-                `A total of **${count}** member(s) holding the **${role.name}** role have advanced to the next year level! 🚀\n\n` +
+            `**Promotion Success!** 🎓\n\n` +
+                `A total of **${count}** member(s) holding the <@&${role.id}> role have advanced to the next year level! 🚀\n\n` +
                 `Let's congratulate them as they take on new challenges and adventures. Keep up the great work, everyone! 🎉`
         );
     }
@@ -214,7 +214,7 @@ client.on("interactionCreate", async (interaction) => {
     // If none of the above, reply with usage help
     return interaction.editReply({
         content:
-            "❓ **Oops!** That doesn't look like a valid argument.\n\n" +
+            "**Oops!**❓\nThat doesn't look like a valid argument.\n\n" +
             "Please use one of the following formats:\n" +
             "• `/promote all` — Promote everyone to the next year level\n" +
             "• `/promote @user` — Promote a specific user\n" +
@@ -236,7 +236,8 @@ client.on("interactionCreate", async (interaction) => {
         )
     ) {
         return interaction.reply({
-            content: "You don't have permission to use this command.",
+            content:
+                "**Access Denied!**\n\nYou need to be an Administrator to use this command.\n\nIf you believe this is a mistake, please contact a server admin. ⛔",
             flags: MessageFlags.Ephemeral,
         });
     }
@@ -244,7 +245,8 @@ client.on("interactionCreate", async (interaction) => {
     const guild = interaction.guild;
     if (!guild) {
         return interaction.reply({
-            content: "Guild not found.",
+            content:
+                "**Guild Not Found!**\n\nIt looks like I can't find the server information right now. Please try again later or contact an administrator if this issue persists. ❌",
             flags: MessageFlags.Ephemeral,
         });
     }
@@ -262,12 +264,17 @@ client.on("interactionCreate", async (interaction) => {
     await guild.members.fetch();
 
     // Build the summary message
-    let result = "**Year Level Member Count:**\n";
+    let result = "**Year Level Member Stats**\n";
     for (const { id, name } of roles) {
         const role = guild.roles.cache.get(id);
         const count = role ? role.members.size : 0;
-        result += `\n**${name}:** ${count}`;
+        result += `\n<@&${role.id}>: \`${count}\` member${
+            count === 1 ? "" : "s"
+        }`;
     }
+    result +=
+        "\n\n_Keep growing, learning, and supporting each other!_ ✨\n" +
+        "If you see your year looking a little empty, invite your classmates to join the fun! 🚀";
 
     // Send the summary as an ephemeral message (only visible to the user)
     await interaction.reply({

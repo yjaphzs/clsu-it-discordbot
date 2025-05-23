@@ -22,7 +22,7 @@ const commands = [
         .toJSON(),
 
     new SlashCommandBuilder()
-        .setName("listyearlevels")
+        .setName("year-level-member-stats")
         .setDescription("List all members per year level")
         .toJSON(),
 ];
