@@ -33,81 +33,8 @@ const client = new Client({
 
 // Log when the bot is ready
 client.once("ready", () => {
-    console.log(`Logged in as ${client.user.tag}!`);
+    console.log(`🤖 Bot online! Logged in as ${client.user.tag} 🚀`);
 });
-
-//   if (
-//     !message.content.startsWith('!promote') ||
-//     !message.member.permissions.has(PermissionsBitField.Flags.Administrator)
-//   ) return;
-
-//   const guild = message.guild;
-//   if (!guild) return;
-
-//   // Role IDs in order
-//   const roles = [
-//     "1374391082648862852", // Freshman
-//     "1276560712336146442", // First Year
-//     "1276560813662142527", // Second Year
-//     "1276560867248439307", // Third Year
-//     "1276560973750206484"  // Fourth Year
-//   ];
-
-//   // Fetch all members
-//   await guild.members.fetch();
-
-//   const args = message.content.trim().split(/\s+/).slice(1);
-
-//   // Helper: promote a member if possible
-//   async function promoteMember(member) {
-//     for (let i = roles.length - 2; i >= 0; i--) {
-//       if (member.roles.cache.has(roles[i])) {
-//         await member.roles.remove(roles[i]);
-//         await member.roles.add(roles[i + 1]);
-//         return true;
-//       }
-//     }
-//     return false;
-//   }
-
-//   // !promote all
-//   if (args.length === 0 || args[0].toLowerCase() === "all") {
-//     let count = 0;
-//     for (let i = roles.length - 2; i >= 0; i--) {
-//       const fromRole = guild.roles.cache.get(roles[i]);
-//       if (!fromRole) continue;
-//       for (const member of fromRole.members.values()) {
-//         if (await promoteMember(member)) count++;
-//       }
-//     }
-//     return message.reply(`Promoted ${count} members.`);
-//   }
-
-//   // !promote <@user>
-//   if (message.mentions.members.size > 0) {
-//     let count = 0;
-//     for (const member of message.mentions.members.values()) {
-//       if (await promoteMember(member)) count++;
-//     }
-//     return message.reply(`Promoted ${count} mentioned user(s).`);
-//   }
-
-//   // !promote <role>
-//   const roleArg = args.join(" ");
-//   const role = guild.roles.cache.find(r =>
-//     r.id === roleArg.replace(/[<@&>]/g, "") ||
-//     r.name.toLowerCase() === roleArg.toLowerCase()
-//   );
-//   if (role && roles.includes(role.id)) {
-//     let count = 0;
-//     for (const member of role.members.values()) {
-//       if (await promoteMember(member)) count++;
-//     }
-//     return message.reply(`Promoted ${count} member(s) with role ${role.name}.`);
-//   }
-
-//   message.reply("Invalid argument. Use `!promote all`, `!promote @user`, or `!promote <role>`.");
-// });
 
 // Slash command handler for /promote
 client.on("interactionCreate", async (interaction) => {
@@ -122,7 +49,8 @@ client.on("interactionCreate", async (interaction) => {
         )
     ) {
         return interaction.reply({
-            content: "You don't have permission to use this command.",
+            content:
+                "⛔ **Access Denied!**\n\nYou need to be an Administrator to use this command.\n\nIf you believe this is a mistake, please contact a server admin. 🔒",
             flags: MessageFlags.Ephemeral,
         });
     }
@@ -130,7 +58,8 @@ client.on("interactionCreate", async (interaction) => {
     const guild = interaction.guild;
     if (!guild)
         return interaction.reply({
-            content: "Guild not found.",
+            content:
+                "❌ **Guild Not Found!**\n\nIt looks like I can't find the server information right now. Please try again later or contact an administrator if this issue persists. 🛠️",
             flags: MessageFlags.Ephemeral,
         });
 
@@ -172,6 +101,30 @@ client.on("interactionCreate", async (interaction) => {
         return false;
     }
 
+    // yearLevelChannels are the channels to notify when promoting all members
+    const yearLevelChannels = [
+        {
+            roleId: "1276560712336146442",
+            name: "First Year",
+            channelId: "1279060126627528714",
+        },
+        {
+            roleId: "1276560813662142527",
+            name: "Second Year",
+            channelId: "1279062445993758793",
+        },
+        {
+            roleId: "1276560867248439307",
+            name: "Third Year",
+            channelId: "1279062500540813352",
+        },
+        {
+            roleId: "1276560973750206484",
+            name: "Fourth Year",
+            channelId: "1279062542106365963",
+        },
+    ];
+
     // Defer reply to avoid interaction timeout (if processing takes time)
     await interaction.deferReply();
 
@@ -186,7 +139,27 @@ client.on("interactionCreate", async (interaction) => {
                 if (await promoteMember(member)) count++;
             }
         }
-        return interaction.editReply(`Promoted ${count} members.`);
+        // Send info message to each year level chat channel
+        for (const { roleId, name, channelId } of yearLevelChannels) {
+            const channel = guild.channels.cache.get(channelId);
+            if (channel && channel.isTextBased()) {
+                await channel.send(
+                    `:tada: **A Fresh Start!** :tada:\n` +
+                        `Welcome, **${name}** students, to a brand new academic year! 🎓\n\n` +
+                        `This channel is now your official hangout for all things ${name}.\n` +
+                        `Feel free to introduce yourselves, ask questions, and support each other as you journey through this year together.\n\n` +
+                        `*Please note: All previous messages are memories from the last batch. Let's make new ones!*\n\n` +
+                        `Wishing everyone an amazing, productive, and fun school year ahead! 🚀`
+                );
+            }
+        }
+        // Send a summary message to the command invoker
+        return interaction.editReply(
+            `🎉 **Promotion Complete!** 🎉\n\n` +
+                `A total of **${count} members** have been promoted to their next year level!\n\n` +
+                `All year level channels have been notified and are ready for a fresh start. ` +
+                `Let's make this academic year the best one yet—good luck and have fun, everyone! 🚀`
+        );
     }
 
     // Handle /promote @user (mention)
@@ -201,10 +174,11 @@ client.on("interactionCreate", async (interaction) => {
             });
         }
         const promoted = await promoteMember(member);
+        // Reply with a success or failure message
         return interaction.editReply(
             promoted
-                ? `Promoted ${member.user.tag}.`
-                : `${member.user.tag} could not be promoted.`
+                ? `🌟 **Success!** ${member.user.tag} has leveled up to the next year! 🎓 Give them a warm welcome and wish them luck on their new journey!`
+                : `⚠️ ${member.user.tag} could not be promoted. They may already be at the highest year level or do not meet the requirements.`
         );
     }
 
@@ -220,15 +194,23 @@ client.on("interactionCreate", async (interaction) => {
         for (const member of role.members.values()) {
             if (await promoteMember(member)) count++;
         }
+        // Send a summary message to the command invoker
         return interaction.editReply(
-            `Promoted ${count} member(s) with role ${role.name}.`
+            `🎓 **Promotion Success!** 🎓\n\n` +
+                `A total of **${count}** member(s) holding the **${role.name}** role have advanced to the next year level! 🚀\n\n` +
+                `Let's congratulate them as they take on new challenges and adventures. Keep up the great work, everyone! 🎉`
         );
     }
 
     // If none of the above, reply with usage help
     return interaction.editReply({
         content:
-            "Invalid argument. Use `all`, `@user`, or a role name/mention/ID.",
+            "❓ **Oops!** That doesn't look like a valid argument.\n\n" +
+            "Please use one of the following formats:\n" +
+            "• `/promote all` — Promote everyone to the next year level\n" +
+            "• `/promote @user` — Promote a specific user\n" +
+            "• `/promote <role>` — Promote all members of a specific year level\n\n" +
+            "Give it another try! 🚀",
         flags: MessageFlags.Ephemeral,
     });
 });
