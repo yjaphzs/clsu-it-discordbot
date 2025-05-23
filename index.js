@@ -78,19 +78,27 @@ client.on("interactionCreate", async (interaction) => {
     // Get the target argument from the slash command
     const target = interaction.options.getString("target");
 
-    const UNVERIFIED_ROLE_ID = "1276428966454104172";
+    const UNVERIFIED_ROLE_ID = "1276428420007596125";
     const INTRODUCED_ROLE_ID = "1280119205429117079";
 
     // Helper function to promote a member to the next year
     async function promoteMember(member) {
         // Do not promote if user has unverified or does not have introduced role
-        if (
-            member.roles.cache.has(UNVERIFIED_ROLE_ID) ||
-            !member.roles.cache.has(INTRODUCED_ROLE_ID)
-        ) {
-            return false;
+
+        const isFreshman = member.roles.cache.has("1374391082648862852"); // Freshman role ID
+
+        // Only check for unverified/introduced if NOT Freshman
+        if (!isFreshman) {
+            if (
+                member.roles.cache.has(UNVERIFIED_ROLE_ID) ||
+                !member.roles.cache.has(INTRODUCED_ROLE_ID)
+            ) {
+                return false;
+            }
         }
 
+        // Loop through all year-level roles except the last one (highest year)
+        // If the member has a year-level role, remove it and add the next higher year-level role
         for (let i = roles.length - 2; i >= 0; i--) {
             if (member.roles.cache.has(roles[i].id)) {
                 await member.roles.remove(roles[i].id);
@@ -169,7 +177,8 @@ client.on("interactionCreate", async (interaction) => {
         const member = guild.members.cache.get(userId);
         if (!member) {
             return interaction.editReply({
-                content: "User not found.",
+                content:
+                    "🔍 **User Not Found!**\n\nI couldn't find that user in the server. Please double-check the mention or ID and try again! If you think this is an error, make sure the user is still a member of the server. 👤",
                 flags: MessageFlags.Ephemeral,
             });
         }
