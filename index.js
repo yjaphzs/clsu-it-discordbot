@@ -227,7 +227,7 @@ client.on("interactionCreate", async (interaction) => {
 client.on("interactionCreate", async (interaction) => {
     // Only handle the /listyearlevels slash command
     if (!interaction.isChatInputCommand()) return;
-    if (interaction.commandName !== "listyearlevels") return;
+    if (interaction.commandName !== "year-level-member-stats") return;
 
     // Restrict command usage to administrators
     if (
