@@ -170,6 +170,13 @@ async function getFacebookPagePosts(limit = 10) {
     }
 }
 
+/**
+ * Fetch posts that have shared the given post (sharedposts edge).
+ * @param {string} postId - The ID of the original post.
+ * @param {string} pageAccessToken - The Facebook Page Access Token.
+ * @param {number} limit - Number of shared posts to fetch.
+ * @returns {Promise<Array>} - Array of shared post objects.
+ */
 async function getSharedPosts(postId, pageAccessToken, limit = 10) {
     const fields = "id,message,created_time,permalink_url,full_picture";
     const url = `https://graph.facebook.com/${FB_GRAPH_API_VERSION}/${postId}/sharedposts?fields=${fields}&access_token=${pageAccessToken}&limit=${limit}`;
@@ -187,6 +194,12 @@ async function getSharedPosts(postId, pageAccessToken, limit = 10) {
     }
 }
 
+/**
+ * Fetch the full_picture (image) of a post by its ID.
+ * @param {string} postId - The ID of the post.
+ * @param {string} pageAccessToken - The Facebook Page Access Token.
+ * @returns {Promise<string|null>} - The image URL or null if not found.
+ */
 async function fetchSharedPostImage(postId, pageAccessToken) {
     const fields = "full_picture";
     const url = `https://graph.facebook.com/v19.0/${postId}?fields=${fields}&access_token=${pageAccessToken}`;
