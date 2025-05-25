@@ -13,7 +13,16 @@
  * Date: May 21, 2025
  */
 
+// Laod environment variables from .env file
 require("dotenv").config();
+
+const { getPostedIds, savePostedId } = require("./utils");
+const { getFacebookPagePosts } = require("./facebook-api");
+const {
+    composeDiscordWebhookMessage,
+    sendDiscordWebhookMessage,
+} = require("./discord-webhook");
+
 const {
     Client,
     GatewayIntentBits,
@@ -31,9 +40,46 @@ const client = new Client({
     ],
 });
 
+/**
+ * Runs the Facebook-to-Discord posting logic every hour,
+ * but only between 6:00am and 10:00pm server time.
+ */
+function scheduleFacebookToDiscordPosting() {
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+
+    let postedIds = getPostedIds();
+
+    async function runIfWithinTime() {
+        const now = new Date();
+        const hour = now.getHours();
+        // Only run between 6:00 (6am) and 22:00 (10pm)
+        if (hour >= 6 && hour < 22) {
+            let postedIds = getPostedIds();
+            const posts = await getFacebookPagePosts(30);
+            if (posts) {
+                for (const post of posts) {
+                    if (postedIds.includes(post.id)) continue;
+                    const payload = await composeDiscordWebhookMessage(post);
+                    await sendDiscordWebhookMessage(webhookUrl, payload);
+                    savePostedId(post.id);
+                    postedIds = getPostedIds();
+                }
+            }
+        }
+    }
+
+    // Run immediately on startup
+    runIfWithinTime();
+
+    // Then run every 30 minutes
+    setInterval(runIfWithinTime, 30 * 60 * 1000);
+}
+
 // Log when the bot is ready
-client.once("ready", () => {
-    console.log(`🤖 Bot online! Logged in as ${client.user.tag} 🚀`);
+client.once("ready", async () => {
+    console.log(`Bot online! 🤖\n\nLogged in as ${client.user.tag} 🚀`);
+
+    scheduleFacebookToDiscordPosting();
 });
 
 // Slash command handler for /promote
