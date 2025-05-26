@@ -39,9 +39,6 @@ async function composeDiscordWebhookMessage(post, color = 0x4289db) {
                 description: `[**${title}**](${url})\n\n${content}`,
                 color: color,
                 timestamp: post.created_time,
-                footer: formattedTime
-                    ? { text: `Posted: ${formattedTime}` }
-                    : undefined,
             },
         ],
     };
