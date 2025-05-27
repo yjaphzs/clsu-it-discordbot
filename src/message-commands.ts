@@ -327,6 +327,13 @@ export function registerMessageCommands(client: Client) {
                 try {
                     if (!message.guild) return;
                     const member = await message.guild.members.fetch(user.id);
+
+                    // If user is NOT Fourth Year, remove their 🎓 reaction and return
+                    if (!member.roles.cache.has(FOURTH_YEAR_ROLE_ID)) {
+                        await reaction.users.remove(user.id);
+                        return;
+                    }
+
                     if (
                         member.roles.cache.has(FOURTH_YEAR_ROLE_ID) &&
                         !member.roles.cache.has(ALUMNI_ROLE_ID)
