@@ -1,4 +1,10 @@
-import { Client, PermissionsBitField, GuildMember } from "discord.js";
+import {
+    Client,
+    PermissionsBitField,
+    GuildMember,
+    EmbedBuilder,
+    AttachmentBuilder,
+} from "discord.js";
 
 // Load environment variables
 import * as dotenv from "dotenv";
@@ -21,6 +27,7 @@ export function registerMessageCommands(client: Client) {
         const SECOND_YEAR_CHANNEL_ID = process.env.SECOND_YEAR_CHANNEL_ID!;
         const THIRD_YEAR_CHANNEL_ID = process.env.THIRD_YEAR_CHANNEL_ID!;
         const FOURTH_YEAR_CHANNEL_ID = process.env.FOURTH_YEAR_CHANNEL_ID!;
+        const ALUMNI_ROLE_ID = process.env.ALUMNI_ROLE_ID!;
 
         // Command prefix and name (case-insensitive)
         if (message.content.toLowerCase().startsWith("it!promote")) {
@@ -272,24 +279,91 @@ export function registerMessageCommands(client: Client) {
                 );
             }
 
-            // Mention all Fourth Year members
-            const graduates = Array.from(role.members.values());
-            if (graduates.length === 0) {
-                return message.channel.send(
-                    "There are no Fourth Year members to congratulate!"
-                );
-            }
-
-            const mentions = graduates
-                .map((member) => `<@${member.user.id}>`)
-                .join(" ");
-            return message.channel.send(
-                `🎓 **Congratulations to our Fourth Year Graduates!** 🎉\n\n` +
-                    `${mentions}\n\n` +
-                    "You did it! Your hard work, dedication, and perseverance have paid off. " +
-                    "We are so proud of each and every one of you. Wishing you all the best in your future endeavors—go out there and shine! 🌟\n\n" +
-                    "_From your CLSU IT Discord family_"
+            const imagePath = require("path").join(
+                __dirname,
+                "images",
+                "congrats-graduates.jpg"
             );
+
+            const attachment = new AttachmentBuilder(imagePath);
+
+            const embed = new EmbedBuilder()
+                .setTitle("Congratulations to our Fourth Year Graduates! 🎉")
+                .setDescription(
+                    `<@&${role.id}>\n\n` +
+                        "You did it! Your hard work, dedication, and perseverance have paid off. " +
+                        "We are so proud of each and every one of you. Wishing you all the best in your future endeavors—go out there and shine! 🌟\n\n" +
+                        "_From your CLSU IT Discord family_"
+                )
+                .setImage("attachment://congrats-graduates.jpg")
+                .setColor("#3eea8b");
+
+            await message.channel.send({
+                embeds: [embed],
+                files: [attachment],
+            });
+
+            // Alumni embed with reaction
+            const alumniEmbed = new EmbedBuilder()
+                .setTitle("Grab Your Graduation Hat! 🎓")
+                .setDescription(
+                    `If you are a graduate, react with 🎓 to this message to receive the <@&${ALUMNI_ROLE_ID}> role!\n\n` +
+                        `Once you react, your <@&${FOURTH_YEAR_ROLE_ID}> role will be removed and you'll be given the Alumni role. Congratulations!`
+                )
+                .setColor("#3eea8b");
+
+            const alumniMessage = await message.channel.send({
+                embeds: [alumniEmbed],
+            });
+            await alumniMessage.react("🎓");
+
+            // Reaction collector for Alumni role assignment
+            const filter = (reaction: any, user: any) =>
+                reaction.emoji.name === "🎓" && !user.bot;
+
+            const collector = alumniMessage.createReactionCollector({ filter });
+
+            collector.on("collect", async (reaction, user) => {
+                try {
+                    if (!message.guild) return;
+                    const member = await message.guild.members.fetch(user.id);
+                    if (
+                        member.roles.cache.has(FOURTH_YEAR_ROLE_ID) &&
+                        !member.roles.cache.has(ALUMNI_ROLE_ID)
+                    ) {
+                        const imagePath = require("path").join(
+                            __dirname,
+                            "images",
+                            "you-did-it.jpg"
+                        );
+
+                        const attachment = new AttachmentBuilder(imagePath);
+
+                        await member.roles.remove(FOURTH_YEAR_ROLE_ID);
+                        await member.roles.add(ALUMNI_ROLE_ID);
+                        const alumniDmEmbed = new EmbedBuilder()
+                            .setTitle("Hats off to you, Graduate! 🎓")
+                            .setDescription(
+                                `Hey <@${member.user.id}>, you’ve officially joined the ranks of our **Alumni**! 🏅\n\n` +
+                                    "Your journey as a Fourth Year has come to a triumphant close, but your adventure is just beginning. Thank you for all the memories, laughter, and hard work you’ve shared with the CLSU IT community.\n\n" +
+                                    "May your next chapter be filled with success, growth, and endless opportunities. Remember, you’ll always have a home here with us. Welcome to the Alumni family! 💚\n\n" +
+                                    "*Keep shining and inspiring others—your story is just getting started!* 🚀"
+                            )
+                            .setImage("attachment://you-did-it.jpg")
+                            .setColor("#3eea8b");
+
+                        await member.send({
+                            embeds: [alumniDmEmbed],
+                            files: [attachment],
+                        });
+                    }
+                } catch (err) {
+                    console.error("Error assigning Alumni role:", err);
+                    await message.channel.send(
+                        `An error occurred while assigning the <@&${ALUMNI_ROLE_ID}> role. Please contact an administrator. ❌`
+                    );
+                }
+            });
         }
     });
 }

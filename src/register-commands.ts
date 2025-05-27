@@ -26,10 +26,19 @@ const commands = [
         .setName("year-level-member-stats")
         .setDescription("List all members per year level")
         .toJSON(),
+
+    new SlashCommandBuilder()
+        .setName("congratulate-graduates")
+        .setDescription(
+            "Congratulate all Fourth Year members and start the alumni role process"
+        )
+        .toJSON(),
 ];
 
 // Set up REST client with your bot token
-const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN as string);
+const rest = new REST({ version: "10" }).setToken(
+    process.env.BOT_TOKEN as string
+);
 
 // Register the commands for your guild (server)
 (async () => {

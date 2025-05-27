@@ -3,6 +3,9 @@ import {
     PermissionsBitField,
     GuildMember,
     MessageFlags,
+    TextChannel,
+    EmbedBuilder,
+    AttachmentBuilder,
 } from "discord.js";
 
 // Load environment variables
@@ -285,6 +288,146 @@ export function registerSlashCommands(client: Client) {
                 content: result,
                 flags: MessageFlags.Ephemeral,
             });
+        } else if (interaction.commandName === "congratulate-graduates") {
+            // Restrict command usage to administrators
+            if (
+                !(
+                    interaction.member &&
+                    "permissions" in interaction.member &&
+                    typeof interaction.member.permissions !== "string" &&
+                    interaction.member.permissions.has(
+                        PermissionsBitField.Flags.Administrator
+                    )
+                )
+            ) {
+                return interaction.reply({
+                    content:
+                        "**Access Denied!**\n\nYou need to be an Administrator to use this command.\n\nIf you believe this is a mistake, please contact a server admin. ⛔",
+                    flags: MessageFlags.Ephemeral,
+                });
+            }
+
+            const guild = interaction.guild;
+            if (!guild) {
+                return interaction.reply({
+                    content:
+                        "**Guild Not Found!**\n\nIt looks like I can't find the server information right now. Please try again later or contact an administrator if this issue persists. ❌",
+                    flags: MessageFlags.Ephemeral,
+                });
+            }
+
+            const FOURTH_YEAR_ROLE_ID = process.env.FOURTH_YEAR_ROLE_ID!;
+            const ALUMNI_ROLE_ID = process.env.ALUMNI_ROLE_ID!;
+            const role = guild.roles.cache.get(FOURTH_YEAR_ROLE_ID);
+
+            if (!role) {
+                return interaction.reply({
+                    content:
+                        "Fourth Year role not found. Please check the role ID.",
+                    flags: MessageFlags.Ephemeral,
+                });
+            }
+
+            const imagePath = require("path").join(
+                __dirname,
+                "images",
+                "congrats-graduates.jpg"
+            );
+            const attachment = new AttachmentBuilder(imagePath);
+
+            const embed = new EmbedBuilder()
+                .setTitle("Congratulations to our Fourth Year Graduates! 🎉")
+                .setDescription(
+                    `<@&${role.id}>\n\n` +
+                        "You did it! Your hard work, dedication, and perseverance have paid off. " +
+                        "We are so proud of each and every one of you. Wishing you all the best in your future endeavors—go out there and shine! 🌟\n\n" +
+                        "_From your CLSU IT Discord family_"
+                )
+                .setImage("attachment://congrats-graduates.jpg")
+                .setColor("#3eea8b");
+
+            await interaction.reply({
+                embeds: [embed],
+                files: [attachment],
+            });
+
+            // Alumni embed with reaction
+            const alumniEmbed = new EmbedBuilder()
+                .setTitle("Grab Your Graduation Hat! 🎓")
+                .setDescription(
+                    `If you are a graduate, react with 🎓 to this message to receive the <@&${ALUMNI_ROLE_ID}> role!\n\n` +
+                        `Once you react, your <@&${FOURTH_YEAR_ROLE_ID}> role will be removed and you'll be given the Alumni role. Congratulations!`
+                )
+                .setColor("#3eea8b");
+
+            let alumniMessage = null;
+            if (
+                interaction.channel &&
+                interaction.channel.isTextBased() &&
+                interaction.channel instanceof TextChannel
+            ) {
+                alumniMessage = await interaction.channel.send({
+                    embeds: [alumniEmbed],
+                });
+                await alumniMessage.react("🎓");
+            }
+
+            // Reaction collector for Alumni role assignment
+            const filter = (reaction: any, user: any) =>
+                reaction.emoji.name === "🎓" && !user.bot;
+
+            if (alumniMessage) {
+                const collector = alumniMessage.createReactionCollector({
+                    filter,
+                });
+
+                collector.on("collect", async (reaction, user) => {
+                    try {
+                        if (!guild) return;
+                        const member = await guild.members.fetch(user.id);
+                        if (
+                            member.roles.cache.has(FOURTH_YEAR_ROLE_ID) &&
+                            !member.roles.cache.has(ALUMNI_ROLE_ID)
+                        ) {
+                            const imagePath = require("path").join(
+                                __dirname,
+                                "images",
+                                "you-did-it.jpg"
+                            );
+                            const attachment = new AttachmentBuilder(imagePath);
+
+                            const alumniDmEmbed = new EmbedBuilder()
+                                .setTitle("Hats off to you, Graduate! 🎓")
+                                .setDescription(
+                                    `Hey <@${member.user.id}>, you’ve officially joined the ranks of our **Alumni**! 🏅\n\n` +
+                                        "Your journey as a Fourth Year has come to a triumphant close, but your adventure is just beginning. Thank you for all the memories, laughter, and hard work you’ve shared with the CLSU IT community.\n\n" +
+                                        "May your next chapter be filled with success, growth, and endless opportunities. Remember, you’ll always have a home here with us. Welcome to the Alumni family! 💚\n\n" +
+                                        "*Keep shining and inspiring others—your story is just getting started!* 🚀"
+                                )
+                                .setImage("attachment://you-did-it.jpg")
+                                .setColor("#3eea8b");
+
+                            await member.roles.remove(FOURTH_YEAR_ROLE_ID);
+                            await member.roles.add(ALUMNI_ROLE_ID);
+                            await member.send({
+                                embeds: [alumniDmEmbed],
+                                files: [attachment],
+                            });
+                        }
+                    } catch (err) {
+                        console.error("Error assigning Alumni role:", err);
+                        if (
+                            alumniMessage.channel &&
+                            alumniMessage.channel.isTextBased() &&
+                            "send" in alumniMessage.channel
+                        ) {
+                            await alumniMessage.channel.send(
+                                `An error occurred while assigning the <@&${ALUMNI_ROLE_ID}> role. Please contact an administrator. ❌`
+                            );
+                        }
+                    }
+                });
+            }
         }
     });
 }
