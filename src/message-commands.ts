@@ -1,12 +1,37 @@
 import { Client, PermissionsBitField, GuildMember } from "discord.js";
 
+// Load environment variables
+import * as dotenv from "dotenv";
+dotenv.config();
+
 export function registerMessageCommands(client: Client) {
     client.on("messageCreate", async (message) => {
         // Ignore bots and DMs
         if (message.author.bot || !message.guild) return;
 
+        // Get role IDs from environment variables
+        const FRESHMAN_ROLE_ID = process.env.FRESHMAN_ROLE_ID!;
+        const FIRST_YEAR_ROLE_ID = process.env.FIRST_YEAR_ROLE_ID!;
+        const SECOND_YEAR_ROLE_ID = process.env.SECOND_YEAR_ROLE_ID!;
+        const THIRD_YEAR_ROLE_ID = process.env.THIRD_YEAR_ROLE_ID!;
+        const FOURTH_YEAR_ROLE_ID = process.env.FOURTH_YEAR_ROLE_ID!;
+        const UNVERIFIED_ROLE_ID = process.env.UNVERIFIED_ROLE_ID!;
+        const INTRODUCED_ROLE_ID = process.env.INTRODUCED_ROLE_ID!;
+        const FIRST_YEAR_CHANNEL_ID = process.env.FIRST_YEAR_CHANNEL_ID!;
+        const SECOND_YEAR_CHANNEL_ID = process.env.SECOND_YEAR_CHANNEL_ID!;
+        const THIRD_YEAR_CHANNEL_ID = process.env.THIRD_YEAR_CHANNEL_ID!;
+        const FOURTH_YEAR_CHANNEL_ID = process.env.FOURTH_YEAR_CHANNEL_ID!;
+
         // Command prefix and name (case-insensitive)
         if (message.content.toLowerCase().startsWith("it!promote")) {
+            /**
+             * This command promotes users to the next year level.
+             * It can be used in three ways:
+             * - `it!promote all` - Promotes all members to the next year level.
+             * - `it!promote @user` - Promotes a specific user by mention.
+             * - `it!promote <role>` - Promotes all members of a specific year level role.
+             */
+
             // Command prefix
             const prefix = "it!promote";
 
@@ -30,11 +55,11 @@ export function registerMessageCommands(client: Client) {
 
             // List of role IDs in promotion order
             const roles = [
-                { id: "1374391082648862852", name: "Freshman" },
-                { id: "1276560712336146442", name: "First Year" },
-                { id: "1276560813662142527", name: "Second Year" },
-                { id: "1276560867248439307", name: "Third Year" },
-                { id: "1276560973750206484", name: "Fourth Year" },
+                { id: FRESHMAN_ROLE_ID, name: "Freshman" },
+                { id: FIRST_YEAR_ROLE_ID, name: "First Year" },
+                { id: SECOND_YEAR_ROLE_ID, name: "Second Year" },
+                { id: THIRD_YEAR_ROLE_ID, name: "Third Year" },
+                { id: FOURTH_YEAR_ROLE_ID, name: "Fourth Year" },
             ];
 
             // Make sure all members are cached
@@ -47,16 +72,11 @@ export function registerMessageCommands(client: Client) {
                 .split(/ +/);
             const target = args.join(" ");
 
-            const UNVERIFIED_ROLE_ID = "1276428420007596125";
-            const INTRODUCED_ROLE_ID = "1280119205429117079";
-
             // Helper function to promote a member to the next year
             async function promoteMember(
                 member: GuildMember
             ): Promise<boolean> {
-                const isFreshman = member.roles.cache.has(
-                    "1374391082648862852"
-                );
+                const isFreshman = member.roles.cache.has(FRESHMAN_ROLE_ID);
                 if (!isFreshman) {
                     if (
                         member.roles.cache.has(UNVERIFIED_ROLE_ID) ||
@@ -78,24 +98,24 @@ export function registerMessageCommands(client: Client) {
             // yearLevelChannels are the channels to notify when promoting all members
             const yearLevelChannels = [
                 {
-                    roleId: "1276560712336146442",
+                    roleId: FIRST_YEAR_ROLE_ID,
                     name: "First Year",
-                    channelId: "1279060126627528714",
+                    channelId: FIRST_YEAR_CHANNEL_ID!,
                 },
                 {
-                    roleId: "1276560813662142527",
+                    roleId: SECOND_YEAR_ROLE_ID,
                     name: "Second Year",
-                    channelId: "1279062445993758793",
+                    channelId: SECOND_YEAR_CHANNEL_ID!,
                 },
                 {
-                    roleId: "1276560867248439307",
+                    roleId: THIRD_YEAR_ROLE_ID,
                     name: "Third Year",
-                    channelId: "1279062500540813352",
+                    channelId: THIRD_YEAR_CHANNEL_ID!,
                 },
                 {
-                    roleId: "1276560973750206484",
+                    roleId: FOURTH_YEAR_ROLE_ID,
                     name: "Fourth Year",
-                    channelId: "1279062542106365963",
+                    channelId: FOURTH_YEAR_CHANNEL_ID!,
                 },
             ];
 
@@ -179,6 +199,11 @@ export function registerMessageCommands(client: Client) {
             message.content.trim().toLowerCase() ===
             "it!year-level-member-stats"
         ) {
+            /**
+             * This command lists the number of members in each year level
+             * and sends a summary message in the channel.
+             */
+
             // Restrict command usage to administrators
             if (
                 !message.member?.permissions.has(
@@ -192,11 +217,11 @@ export function registerMessageCommands(client: Client) {
 
             // Define the year-level roles and their IDs
             const roles = [
-                { id: "1374391082648862852", name: "Freshman" },
-                { id: "1276560712336146442", name: "First Year" },
-                { id: "1276560813662142527", name: "Second Year" },
-                { id: "1276560867248439307", name: "Third Year" },
-                { id: "1276560973750206484", name: "Fourth Year" },
+                { id: FRESHMAN_ROLE_ID, name: "Freshman" },
+                { id: FIRST_YEAR_ROLE_ID, name: "First Year" },
+                { id: SECOND_YEAR_ROLE_ID, name: "Second Year" },
+                { id: THIRD_YEAR_ROLE_ID, name: "Third Year" },
+                { id: FOURTH_YEAR_ROLE_ID, name: "Fourth Year" },
             ];
 
             // Ensure all members are cached so we get accurate counts
@@ -219,6 +244,52 @@ export function registerMessageCommands(client: Client) {
 
             // Send the summary as a public message
             await message.channel.send(result);
+        } else if (
+            message.content.trim().toLowerCase() === "it!congratulate-graduates"
+        ) {
+            /**
+             * This command congratulates all Fourth Year members
+             * on their graduation and mentions them in the channel.
+             */
+
+            // Restrict command usage to administrators
+            if (
+                !message.member?.permissions.has(
+                    PermissionsBitField.Flags.Administrator
+                )
+            ) {
+                return message.reply(
+                    "**Access Denied!**\n\nYou need to be an Administrator to use this command.\n\nIf you believe this is a mistake, please contact a server admin. ⛔"
+                );
+            }
+
+            // Fourth Year role ID from .env
+            const role = message.guild.roles.cache.get(FOURTH_YEAR_ROLE_ID);
+
+            if (!role) {
+                return message.channel.send(
+                    "Fourth Year role not found. Please check the role ID."
+                );
+            }
+
+            // Mention all Fourth Year members
+            const graduates = Array.from(role.members.values());
+            if (graduates.length === 0) {
+                return message.channel.send(
+                    "There are no Fourth Year members to congratulate!"
+                );
+            }
+
+            const mentions = graduates
+                .map((member) => `<@${member.user.id}>`)
+                .join(" ");
+            return message.channel.send(
+                `🎓 **Congratulations to our Fourth Year Graduates!** 🎉\n\n` +
+                    `${mentions}\n\n` +
+                    "You did it! Your hard work, dedication, and perseverance have paid off. " +
+                    "We are so proud of each and every one of you. Wishing you all the best in your future endeavors—go out there and shine! 🌟\n\n" +
+                    "_From your CLSU IT Discord family_"
+            );
         }
     });
 }
