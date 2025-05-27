@@ -7,4 +7,8 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "index.js"]
+# Build TypeScript files
+RUN npm run build
+
+# Run the compiled JS from the dist directory
+CMD ["node", "dist/index.js"]

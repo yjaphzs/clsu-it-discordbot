@@ -3,10 +3,11 @@
  * This script registers the /promote slash command for your Discord bot.
  * Run this file manually whenever you update your slash commands.
  *
- * */
+ */
 
-const { REST, Routes, SlashCommandBuilder } = require("discord.js");
-require("dotenv").config();
+import { REST, Routes, SlashCommandBuilder } from "discord.js";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 // Define the slash command(s) to register
 const commands = [
@@ -28,15 +29,15 @@ const commands = [
 ];
 
 // Set up REST client with your bot token
-const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
+const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN as string);
 
 // Register the commands for your guild (server)
 (async () => {
     try {
         await rest.put(
             Routes.applicationGuildCommands(
-                process.env.CLIENT_ID, // Your bot's application/client ID
-                process.env.SERVER_ID // Your Discord server/guild ID
+                process.env.CLIENT_ID as string, // Your bot's application/client ID
+                process.env.SERVER_ID as string // Your Discord server/guild ID
             ),
             { body: commands }
         );

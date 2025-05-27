@@ -13,22 +13,26 @@
  * Date: May 21, 2025
  */
 
-// Laod environment variables from .env file
-require("dotenv").config();
+import * as dotenv from "dotenv";
 
-const { getPostedIds, savePostedId } = require("./utils");
-const { getFacebookPagePosts } = require("./facebook-api");
-const {
+dotenv.config();
+
+import { getPostedIds, savePostedId } from "./utils";
+import { getFacebookPagePosts } from "./facebook-api";
+import {
     composeDiscordWebhookMessage,
     sendDiscordWebhookMessage,
-} = require("./discord-webhook");
+} from "./discord-webhook";
 
-const {
+import {
     Client,
     GatewayIntentBits,
     PermissionsBitField,
     MessageFlags,
-} = require("discord.js");
+    GuildMember,
+    TextBasedChannel,
+    Role,
+} from "discord.js";
 
 // Initialize the Discord client with necessary intents
 const client = new Client({
@@ -45,9 +49,7 @@ const client = new Client({
  * but only between 6:00am and 10:00pm server time.
  */
 function scheduleFacebookToDiscordPosting() {
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-
-    let postedIds = getPostedIds();
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
 
     async function runIfWithinTime() {
         const now = new Date();
@@ -77,8 +79,7 @@ function scheduleFacebookToDiscordPosting() {
 
 // Log when the bot is ready
 client.once("ready", async () => {
-    console.log(`Bot online! 🤖\n\nLogged in as ${client.user.tag} 🚀`);
-
+    console.log(`Bot online! 🤖\n\nLogged in as ${client.user?.tag} 🚀`);
     scheduleFacebookToDiscordPosting();
 });
 
@@ -93,7 +94,9 @@ client.on("messageCreate", async (message) => {
 
     // Only allow users with Administrator permission to use this command
     if (
-        !message.member.permissions.has(PermissionsBitField.Flags.Administrator)
+        !message.member?.permissions.has(
+            PermissionsBitField.Flags.Administrator
+        )
     ) {
         return message.reply(
             "**Access Denied!**\n\nYou need to be an Administrator to use this command.\n\nIf you believe this is a mistake, please contact a server admin. ⛔"
@@ -127,7 +130,7 @@ client.on("messageCreate", async (message) => {
     const INTRODUCED_ROLE_ID = "1280119205429117079";
 
     // Helper function to promote a member to the next year
-    async function promoteMember(member) {
+    async function promoteMember(member: GuildMember): Promise<boolean> {
         const isFreshman = member.roles.cache.has("1374391082648862852");
         if (!isFreshman) {
             if (
@@ -181,9 +184,9 @@ client.on("messageCreate", async (message) => {
                 if (await promoteMember(member)) count++;
             }
         }
-        for (const { roleId, name, channelId } of yearLevelChannels) {
+        for (const { channelId, name } of yearLevelChannels) {
             const channel = guild.channels.cache.get(channelId);
-            if (channel && channel.isTextBased()) {
+            if (channel && channel.isTextBased() && "send" in channel) {
                 await channel.send(
                     `**A Fresh Start!** :tada:\n` +
                         `Welcome, **${name}** students, to a brand new academic year! 🎓\n\n` +
@@ -258,7 +261,7 @@ client.on("messageCreate", async (message) => {
     if (message.content.trim().toLowerCase() === "it!year-level-member-stats") {
         // Restrict command usage to administrators
         if (
-            !message.member.permissions.has(
+            !message.member?.permissions.has(
                 PermissionsBitField.Flags.Administrator
             )
         ) {
@@ -284,9 +287,11 @@ client.on("messageCreate", async (message) => {
         for (const { id, name } of roles) {
             const role = message.guild.roles.cache.get(id);
             const count = role ? role.members.size : 0;
-            result += `\n<@&${role.id}>: \`${count}\` member${
-                count === 1 ? "" : "s"
-            }`;
+            result += role
+                ? `\n<@&${role.id}>: \`${count}\` member${
+                      count === 1 ? "" : "s"
+                  }`
+                : `\n${name}: \`0\` members`;
         }
         result +=
             "\n\n_Keep growing, learning, and supporting each other!_ ✨\n" +
@@ -305,8 +310,13 @@ client.on("interactionCreate", async (interaction) => {
 
     // Only allow users with Administrator permission to use this command
     if (
-        !interaction.member.permissions.has(
-            PermissionsBitField.Flags.Administrator
+        !(
+            interaction.member &&
+            "permissions" in interaction.member &&
+            typeof interaction.member.permissions !== "string" &&
+            interaction.member.permissions.has(
+                PermissionsBitField.Flags.Administrator
+            )
         )
     ) {
         return interaction.reply({
@@ -337,13 +347,13 @@ client.on("interactionCreate", async (interaction) => {
     await guild.members.fetch();
 
     // Get the target argument from the slash command
-    const target = interaction.options.getString("target");
+    const target = interaction.options.getString("target") ?? "";
 
     const UNVERIFIED_ROLE_ID = "1276428420007596125";
     const INTRODUCED_ROLE_ID = "1280119205429117079";
 
     // Helper function to promote a member to the next year
-    async function promoteMember(member) {
+    async function promoteMember(member: GuildMember): Promise<boolean> {
         // Do not promote if user has unverified or does not have introduced role
 
         const isFreshman = member.roles.cache.has("1374391082648862852"); // Freshman role ID
@@ -409,9 +419,9 @@ client.on("interactionCreate", async (interaction) => {
             }
         }
         // Send info message to each year level chat channel
-        for (const { roleId, name, channelId } of yearLevelChannels) {
+        for (const { channelId, name } of yearLevelChannels) {
             const channel = guild.channels.cache.get(channelId);
-            if (channel && channel.isTextBased()) {
+            if (channel && channel.isTextBased() && "send" in channel) {
                 await channel.send(
                     `**A Fresh Start!** :tada:\n` +
                         `Welcome, **${name}** students, to a brand new academic year! 🎓\n\n` +
@@ -440,7 +450,7 @@ client.on("interactionCreate", async (interaction) => {
             return interaction.editReply({
                 content:
                     "**User Not Found!**\n\nI couldn't find that user in the server. Please double-check the mention or ID and try again! If you think this is an error, make sure the user is still a member of the server. 🔍",
-                flags: MessageFlags.Ephemeral,
+                flags: MessageFlags.Ephemeral as number,
             });
         }
         const promoted = await promoteMember(member);
@@ -481,19 +491,25 @@ client.on("interactionCreate", async (interaction) => {
             "• `/promote @user` — Promote a specific user\n" +
             "• `/promote <role>` — Promote all members of a specific year level\n\n" +
             "Give it another try! 🚀",
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral as number,
     });
 });
 
+// Slash command handler for /year-level-member-stats
 client.on("interactionCreate", async (interaction) => {
-    // Only handle the /listyearlevels slash command
+    // Only handle the /year-level-member-stats slash command
     if (!interaction.isChatInputCommand()) return;
     if (interaction.commandName !== "year-level-member-stats") return;
 
     // Restrict command usage to administrators
     if (
-        !interaction.member.permissions.has(
-            PermissionsBitField.Flags.Administrator
+        !(
+            interaction.member &&
+            "permissions" in interaction.member &&
+            typeof interaction.member.permissions !== "string" &&
+            interaction.member.permissions.has(
+                PermissionsBitField.Flags.Administrator
+            )
         )
     ) {
         return interaction.reply({
@@ -529,9 +545,9 @@ client.on("interactionCreate", async (interaction) => {
     for (const { id, name } of roles) {
         const role = guild.roles.cache.get(id);
         const count = role ? role.members.size : 0;
-        result += `\n<@&${role.id}>: \`${count}\` member${
-            count === 1 ? "" : "s"
-        }`;
+        result += role
+            ? `\n<@&${role.id}>: \`${count}\` member${count === 1 ? "" : "s"}`
+            : `\n${name}: \`0\` members`;
     }
     result +=
         "\n\n_Keep growing, learning, and supporting each other!_ ✨\n" +
