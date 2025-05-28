@@ -234,23 +234,41 @@ export function registerMessageCommands(client: Client) {
             // Ensure all members are cached so we get accurate counts
             await message.guild.members.fetch();
 
-            // Build the summary message
-            let result = "**Year Level Member Stats**\n";
+            const imagePath = require("path").join(
+                __dirname,
+                "images",
+                "year-level-stats.jpg"
+            );
+
+            const attachment = new AttachmentBuilder(imagePath);
+
+            // Build the summary message as an embed with image
+            const statsEmbed = new EmbedBuilder()
+                .setTitle("Year Level Member Stats")
+                .setColor("#3eea8b")
+                .setImage("attachment://year-level-stats.jpg");
+
+            let statsDescription = "";
             for (const { id, name } of roles) {
                 const role = message.guild.roles.cache.get(id);
                 const count = role ? role.members.size : 0;
-                result += role
+                statsDescription += role
                     ? `\n<@&${role.id}>: \`${count}\` member${
                           count === 1 ? "" : "s"
                       }`
                     : `\n${name}: \`0\` members`;
             }
-            result +=
+            statsDescription +=
                 "\n\n_Keep growing, learning, and supporting each other!_ ✨\n" +
                 "If you see your year looking a little empty, invite your classmates to join the fun! 🚀";
 
-            // Send the summary as a public message
-            await message.channel.send(result);
+            statsEmbed.setDescription(statsDescription);
+
+            // Send the summary as an embed with image attachment
+            await message.channel.send({
+                embeds: [statsEmbed],
+                files: [attachment],
+            });
         } else if (
             message.content.trim().toLowerCase() === "it!congratulate-graduates"
         ) {
