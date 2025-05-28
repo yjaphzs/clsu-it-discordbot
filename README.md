@@ -7,10 +7,6 @@ Built with **TypeScript**, this bot automates role promotions, Facebook event/ac
 
 ![TypeScript](https://img.shields.io/badge/Made%20with-TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 
-## CLSU IT Discord Server
-
-![image](https://github.com/user-attachments/assets/a932af07-a065-46a0-8328-787626a089a0)
-
 ## Features
 
 - **Role Promotion**
@@ -140,6 +136,14 @@ Built with **TypeScript**, this bot automates role promotions, Facebook event/ac
   - `utils.ts`, `facebook-api.ts`, `discord-webhook.ts` — Helpers
 
 ## Screenshots
+
+### CLSU IT Discord Bot
+
+![image](https://github.com/user-attachments/assets/5508fc5f-b987-4285-94b9-46ce58ecc7ff)
+
+### CLSU IT Discord Server
+
+![image](https://github.com/user-attachments/assets/a932af07-a065-46a0-8328-787626a089a0)
 
 ### Automated Facebook to Discord Posting
 
