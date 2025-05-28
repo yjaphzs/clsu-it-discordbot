@@ -149,17 +149,37 @@ export function registerSlashCommands(client: Client) {
                     }
                 }
                 // Send info message to each year level chat channel
-                for (const { channelId, name } of yearLevelChannels) {
+                for (const { channelId, roleId } of yearLevelChannels) {
                     const channel = guild.channels.cache.get(channelId);
                     if (channel && channel.isTextBased() && "send" in channel) {
-                        await channel.send(
-                            `**A Fresh Start!** :tada:\n` +
-                                `Welcome, **${name}** students, to a brand new academic year! 🎓\n\n` +
-                                `This channel is now your official hangout for all things ${name}.\n` +
-                                `Feel free to introduce yourselves, ask questions, and support each other as you journey through this year together.\n\n` +
-                                `*Please note: All previous messages are memories from the last batch. Let's make new ones!*\n\n` +
-                                `Wishing everyone an amazing, productive, and fun school year ahead! 🚀`
+                        // Send a promotion complete message with an image
+                        const imagePath = require("path").join(
+                            __dirname,
+                            "images",
+                            "fresh-start.jpg"
                         );
+
+                        // Create an attachment for the promotion complete image
+                        const attachment = new AttachmentBuilder(imagePath);
+
+                        // Create the fresh start embed
+                        const freshStartEmbed = new EmbedBuilder()
+                            .setTitle("A Fresh Start! 🎉")
+                            .setDescription(
+                                `Welcome, <@&${roleId}> students, to a brand new academic year! 🌟\n\n` +
+                                    `This channel is now your official hangout for all things.\n` +
+                                    `Feel free to introduce yourselves, ask questions, and support each other as you journey through this year together.\n\n` +
+                                    `*Please note: All previous messages are memories from the last batch. Let's make new ones!*\n\n` +
+                                    `Wishing everyone an amazing, productive, and fun school year ahead! 🚀`
+                            )
+                            .setImage("attachment://fresh-start.jpg")
+                            .setColor("#3eea8b");
+
+                        // Send the fresh start message with the image attachment
+                        return interaction.editReply({
+                            embeds: [freshStartEmbed],
+                            files: [attachment],
+                        });
                     }
                 }
 
