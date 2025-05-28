@@ -2,10 +2,10 @@
 
 # CLSU IT Discord Bot
 
-A feature-rich Discord bot for the Central Luzon State University (CLSU) IT community.  
-This bot automates role promotions, event/achievement posting, and more—making server management and community engagement easier for IT moderators, admins, and students.
+A feature-rich Discord bot for the **Central Luzon State University (CLSU) IT** community.  
+Built with **TypeScript**, this bot automates role promotions, Facebook event/achievement posting, graduation reactions, and more—streamlining server management and boosting community engagement for IT moderators, admins, and students.
 
----
+![TypeScript](https://img.shields.io/badge/Made%20with-TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 
 ## Features
 
@@ -32,8 +32,6 @@ This bot automates role promotions, event/achievement posting, and more—making
     - Birthdays
   - Sends posts to the appropriate Discord channels via webhooks
 
----
-
 ## Commands
 
 ### Slash Commands
@@ -56,8 +54,6 @@ This bot automates role promotions, event/achievement posting, and more—making
 
 > Only users with **Administrator** permission can use the promote and management commands.
 
----
-
 ## Facebook to Discord Posting
 
 - Automatically runs on bot startup and at scheduled intervals (6AM–10PM)
@@ -66,8 +62,6 @@ This bot automates role promotions, event/achievement posting, and more—making
   - **Events Channel**
   - **Exam Schedules Channel**
   - **Birthdays Channel**
-
----
 
 ## Setup
 
@@ -96,8 +90,6 @@ This bot automates role promotions, event/achievement posting, and more—making
    ```sh
    npm start
    ```
-
----
 
 ## Folder Structure
 
@@ -129,19 +121,13 @@ This bot automates role promotions, event/achievement posting, and more—making
 
 ![image](https://github.com/user-attachments/assets/f0be84c8-bb4f-4765-bc18-c0411c62d669)
 
----
-
 ## Contributing
 
 Pull requests and suggestions are welcome!  
 Please open an issue first to discuss what you would like to change.
 
----
-
 ## License
 
 MIT
-
----
 
 **Developed by Jan Bautista for the CLSU IT Community**
