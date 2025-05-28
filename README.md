@@ -78,12 +78,46 @@ Built with **TypeScript**, this bot automates role promotions, Facebook event/ac
 
 3. **Configure environment variables**
 
-   Create a `.env` file with:
-   ```
-   BOT_TOKEN=your_discord_bot_token
-   FACEBOOK_PAGE_ACCESS_TOKEN=your_facebook_token
-   CLIENT_ID=your_discord_client_id
-   SERVER_ID=your_discord_server_id
+   Copy `.env.example` to `.env` and fill in your credentials and IDs.
+   ```env
+   # DISCORD APP
+   APP_ID=
+   PUBLIC_KEY=
+   SERVER_ID=
+   BOT_TOKEN=
+   CLIENT_ID=
+   CLIENT_SECRET=
+  
+   # DISCORD SERVER WEBHOOKS
+   DISCORD_ANNOUNCEMENTS_WEBHOOK_URL=
+   DISCORD_EXAM_SCHEDULES_WEBHOOK_URL=
+   DISCORD_ACHIEVEMENTS_WEBHOOK_URL=
+   DISCORD_GENERAL_CHAT_WEBHOOK_URL=
+   DISCORD_EVENTS_WEBHOOK_URL=
+  
+   # DISCORD SERVER ROLES
+   FRESHMAN_ROLE_ID=
+   FIRST_YEAR_ROLE_ID=
+   SECOND_YEAR_ROLE_ID=
+   THIRD_YEAR_ROLE_ID=
+   FOURTH_YEAR_ROLE_ID=
+   ALUMNI_ROLE_ID=
+   UNVERIFIED_ROLE_ID=
+   INTRODUCED_ROLE_ID=
+  
+   # DISCORD SERVER CHANNELS
+   FIRST_YEAR_CHANNEL_ID=
+   SECOND_YEAR_CHANNEL_ID=
+   THIRD_YEAR_CHANNEL_ID=
+   FOURTH_YEAR_CHANNEL_ID=
+  
+   # FACEBOOK GRAPH API
+   FB_APP_ID=
+   FB_APP_SECRET=
+   FB_PAGE_ID=
+   FB_USER_ID=
+   FB_GRAPH_API_VERSION=
+   FB_LONG_LIVED_USER_TOKEN=
    ```
 
 4. **Run the bot**
@@ -101,13 +135,7 @@ Built with **TypeScript**, this bot automates role promotions, Facebook event/ac
   - `register-commands.ts` — Slash command registration script
   - `utils.ts`, `facebook-api.ts`, `discord-webhook.ts` — Helpers
 
----
-
 ## Screenshots
-
-### Slash Commands
-
-![image](https://github.com/user-attachments/assets/24dc4db0-cb95-458f-931a-31fc2d3aa40f)
 
 ### Automated Facebook to Discord Posting
 
