@@ -6,6 +6,122 @@ import {
 } from "./discord-webhook";
 
 /**
+ * Detects if a post message is about an event (tournament, seminar, contest, workshop, etc.)
+ */
+export function isEventPost(message: string): boolean {
+    if (!message) return false;
+
+    const lower = message.toLowerCase();
+
+    // Common event-related keywords and phrases
+    const eventKeywords = [
+        "event",
+        "tournament",
+        "match schedule",
+        "match lineup",
+        "bracket",
+        "competition",
+        "contest",
+        "seminar",
+        "webinar",
+        "workshop",
+        "conference",
+        "ceremony",
+        "fair",
+        "registration",
+        "register now",
+        "register here",
+        "sign up",
+        "join us",
+        "join now",
+        "slots remaining",
+        "open to all",
+        "open for registration",
+        "deadline",
+        "submission deadline",
+        "mechanics",
+        "guidelines",
+        "how to join",
+        "how to submit",
+        "see you there",
+        "where:",
+        "when:",
+        "date:",
+        "venue:",
+        "location:",
+        "live on",
+        "via discord",
+        "via facebook",
+        "via zoom",
+        "present(s):",
+        "presents:",
+        "invites you",
+        "invitation",
+        "hosted by",
+        "organized by",
+        "brought to you by",
+        "battlefield is set",
+        "let the games begin",
+        "let the competition begin",
+        "let the contest begin",
+        "let the tournament begin",
+        "let the challenge begin",
+        "slots are limited",
+        "first-come, first-served",
+        "teams of",
+        "team registration",
+        "entry fee",
+        "prize pool",
+        "prizes await",
+        "showcase",
+        "featured speakers",
+        "featured topics",
+        "topic:",
+        "topics:",
+        "speaker:",
+        "speakers:",
+        "see you there",
+        "see you at",
+        "see you, it peeps",
+        "intrams",
+        "intramurals",
+        "sportsfest",
+        "#itweek",
+        "#itsportsfest",
+        "#ignite2025",
+        "#studentweek",
+        "#univweek",
+        "#universityweek",
+        "#sikad",
+        "#uweek",
+    ];
+
+    for (const keyword of eventKeywords) {
+        if (lower.includes(keyword)) return true;
+    }
+
+    // Also match for date/time/location patterns
+    const datePattern =
+        /\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}/i;
+    const timePattern = /\b\d{1,2}:\d{2}\s*(am|pm)?\b/i;
+    const locationPattern = /\b(where|venue|location):/i;
+
+    if (
+        datePattern.test(message) ||
+        timePattern.test(message) ||
+        locationPattern.test(message)
+    ) {
+        return true;
+    }
+
+    // Match for "present(s):" or "presents:" followed by an activity name
+    const presentsPattern = /\bpresent(s)?:\s*\w+/i;
+    if (presentsPattern.test(message)) return true;
+
+    return false;
+}
+
+/**
  * Detects if a post message is about an achievement:
  * - Graduation
  * - Scholars
@@ -309,6 +425,9 @@ export function scheduleFacebookToDiscordPosting() {
     const achievementsWebhookUrl = process.env
         .DISCORD_ACHIEVEMENTS_WEBHOOK_URL as string;
 
+    // Event Webhook URL
+    const eventWebhookUrl = process.env.DISCORD_EVENTS_WEBHOOK_URL as string;
+
     // General Channel Webhook URL
     const generalChatWebhookUrl = process.env
         .DISCORD_GENERAL_CHAT_WEBHOOK_URL as string;
@@ -336,6 +455,19 @@ export function scheduleFacebookToDiscordPosting() {
                     ) {
                         await sendDiscordWebhookMessage(
                             achievementsWebhookUrl,
+                            payload
+                        );
+                    }
+
+                    // Check if the post message is about an event
+                    // and send to the events channel if it is
+                    else if (
+                        post.message &&
+                        typeof post.message === "string" &&
+                        isEventPost(post.message)
+                    ) {
+                        await sendDiscordWebhookMessage(
+                            eventWebhookUrl,
                             payload
                         );
                     }
