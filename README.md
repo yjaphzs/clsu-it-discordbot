@@ -14,6 +14,14 @@ This bot automates role promotions, event/achievement posting, and more—making
   - Promote a specific user
   - Promote by role (e.g., all 1st years)
   - Supports both legacy message commands (with prefix) and modern slash commands
+ 
+- **Year Level Member Stats**
+  - View the number of members per year level
+  - List all members in each year level
+
+- **Congratulate Graduates with Reaction Role**
+  - Congratulate all Fourth Year members
+  - Graduates can react to a message to trade their 4th Year role for the Alumni role
 
 - **Automated Facebook to Discord Posting**
   - Automatically fetches posts from the official Facebook page
@@ -23,13 +31,6 @@ This bot automates role promotions, event/achievement posting, and more—making
     - Exam schedules
     - Birthdays
   - Sends posts to the appropriate Discord channels via webhooks
-
-- **Event & Achievement Detection**
-  - Uses keyword and pattern matching to classify posts
-  - Customizable for your community’s needs
-
-- **Birthday Greetings**
-  - Detects and highlights birthday posts
 
 ---
 
@@ -107,6 +108,26 @@ This bot automates role promotions, event/achievement posting, and more—making
   - `schedule-posting.ts` — Facebook to Discord posting logic
   - `register-commands.ts` — Slash command registration script
   - `utils.ts`, `facebook-api.ts`, `discord-webhook.ts` — Helpers
+
+---
+
+## Screenshots
+
+### Slash Commands
+
+![image](https://github.com/user-attachments/assets/24dc4db0-cb95-458f-931a-31fc2d3aa40f)
+
+### Automated Facebook to Discord Posting
+
+![image](https://github.com/user-attachments/assets/46131482-d75e-4b4a-be1f-1fde167b0195)
+
+### Year Level Member Stats
+
+![image](https://github.com/user-attachments/assets/ccee0e26-6609-452e-89b8-24dc1b08f7f2)
+
+### Congratulate Graduates with Reaction Role
+
+![image](https://github.com/user-attachments/assets/f0be84c8-bb4f-4765-bc18-c0411c62d669)
 
 ---
 
