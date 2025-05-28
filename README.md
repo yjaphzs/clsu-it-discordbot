@@ -7,6 +7,10 @@ Built with **TypeScript**, this bot automates role promotions, Facebook event/ac
 
 ![TypeScript](https://img.shields.io/badge/Made%20with-TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 
+## CLSU IT Discord Server
+
+![image](https://github.com/user-attachments/assets/a932af07-a065-46a0-8328-787626a089a0)
+
 ## Features
 
 - **Role Promotion**
