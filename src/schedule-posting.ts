@@ -6,6 +6,193 @@ import {
 } from "./discord-webhook";
 
 /**
+ * Detects if a post message is about an achievement:
+ * - Graduation
+ * - Scholars
+ * - Newly elected officers
+ * - Competition winners (champion, runner-up, etc.)
+ */
+export function isAchievementPost(message: string): boolean {
+    if (!message) return false;
+
+    const lower = message.toLowerCase();
+
+    // Keywords for achievements
+    const achievementKeywords = [
+        "congratulations",
+        "congrats",
+        "proudly congratulate",
+        "proudly congratulates",
+        "cheers to the graduates",
+        "raise your bottles",
+        "cheers to the mid-year graduates",
+        "academic distinction",
+        "cum laude",
+        "magna cum laude",
+        "summa cum laude",
+        "university scholar",
+        "college scholar",
+        "dean lister",
+        "dean's lister",
+        "dean’s lister",
+        "dean listers",
+        "dean's listers",
+        "dean’s listers",
+        "scholars for the",
+        "scholars of the",
+        "you nailed it",
+        "you nailed it!",
+        "bags",
+        "champion",
+        "runner-up",
+        "winner",
+        "winners",
+        "secured",
+        "placed",
+        "placing",
+        "brought home",
+        "brought pride",
+        "elected",
+        "newly elected",
+        "officer",
+        "officers",
+        "representative",
+        "first year representative",
+        "student council",
+        "has emerged as",
+        "has proven",
+        "has achieved",
+        "has been awarded",
+        "has been recognized",
+        "has been named",
+        "has been selected",
+        "has been chosen",
+        "has been appointed",
+        "has been promoted",
+        "top performer",
+        "top performers",
+        "topnotcher",
+        "topnotchers",
+        "awardee",
+        "awardees",
+        "honoree",
+        "honorees",
+        "distinction",
+        "excellence",
+        "outstanding",
+        "best in",
+        "best paper",
+        "best project",
+        "best thesis",
+        "best capstone",
+        "best presentation",
+        "best poster",
+        "best speaker",
+        "best debater",
+        "best programmer",
+        "best designer",
+        "best leader",
+        "best innovator",
+        "best researcher",
+        "best developer",
+        "best team",
+        "best group",
+        "best class",
+        "best section",
+        "best adviser",
+        "best coach",
+        "best mentor",
+        "best faculty",
+        "best staff",
+        "best student",
+        "best teacher",
+        "best professor",
+        "best instructor",
+        "best employee",
+        "best worker",
+        "best volunteer",
+        "best organizer",
+        "best participant",
+        "best attendee",
+        "best supporter",
+        "best contributor",
+        "best donor",
+        "best sponsor",
+        "best partner",
+        "best collaborator",
+        "best friend",
+        "best ally",
+        "best advocate",
+        "best ambassador",
+        "best representative",
+        "best delegate",
+        "best envoy",
+        "best emissary",
+        "best diplomat",
+        "best negotiator",
+        "best mediator",
+        "best arbitrator",
+        "best conciliator",
+        "best peacemaker",
+        "best peacekeeper",
+        "best peacebuilder",
+        "best peace advocate",
+        "best peace ambassador",
+        "best peace representative",
+        "best peace delegate",
+        "best peace envoy",
+        "best peace emissary",
+        "best peace diplomat",
+        "best peace negotiator",
+        "best peace mediator",
+        "best peace arbitrator",
+        "best peace conciliator",
+        "best peace peacemaker",
+        "best peace peacekeeper",
+        "best peace peacebuilder",
+        "best peace peace advocate",
+        "best peace peace ambassador",
+        "best peace peace representative",
+        "best peace peace delegate",
+        "best peace peace envoy",
+        "best peace peace emissary",
+        "best peace peace diplomat",
+        "best peace peace negotiator",
+        "best peace peace mediator",
+        "best peace peace arbitrator",
+        "best peace peace conciliator",
+        "participate",
+        "participated",
+        "onboarding",
+        "leadership camp",
+        "innovation",
+        "training",
+        "attended",
+    ];
+
+    // If any keyword is present, it's likely an achievement post
+    for (const keyword of achievementKeywords) {
+        if (lower.includes(keyword)) return true;
+    }
+
+    // Also match for patterns like "bags 1st place", "secures 2nd runner-up", etc.
+    const achievementPattern =
+        /\b(bags|secures?|wins?|places?|awarded|recognized|elected|appointed|chosen|selected|named)\b.*\b(champion|runner[- ]?up|winner|award|place|distinction|scholar|officer|representative|honoree|topnotcher|top performer)\b/i;
+    if (achievementPattern.test(message)) return true;
+
+    // Graduation pattern
+    if (
+        lower.includes("graduate") &&
+        (lower.includes("congrat") ||
+            lower.includes("cheers") ||
+            lower.includes("proudly"))
+    )
+        return true;
+
+    return false;
+}
+
+/**
  * Detects if a post message is about an examination schedule.
  */
 export function isExamSchedulePost(message: string): boolean {
@@ -63,6 +250,49 @@ export function isExamSchedulePost(message: string): boolean {
 }
 
 /**
+ * Detects if a post message is about a birthday greeting.
+ */
+export function isBirthdayPost(message: string): boolean {
+    if (!message) return false;
+
+    const lower = message.toLowerCase();
+
+    // Common birthday keywords and phrases
+    const birthdayKeywords = [
+        "happy birthday",
+        "happiest birthday",
+        "bright-filled birthday",
+        "delightful birthday",
+        "warmest birthday",
+        "birthday greetings",
+        "birthday to you",
+        "celebrate your birthday",
+        "celebrate the birthday",
+        "special day",
+        "have a wonderful birthday",
+        "have the warmest birthday",
+        "have the happiest birthday",
+        "again, happy birthday",
+        "again, happiest birthday",
+        "birthday wishes",
+        "birthday,",
+        "birthday!",
+    ];
+
+    // If any keyword is present, it's likely a birthday post
+    for (const keyword of birthdayKeywords) {
+        if (lower.includes(keyword)) return true;
+    }
+
+    // Also match for "birthday" and a name in the same sentence
+    const birthdayPattern =
+        /\b(happy|happiest|bright-filled|delightful|warmest)?\s*birthday\b/i;
+    if (birthdayPattern.test(message)) return true;
+
+    return false;
+}
+
+/**
  * Runs the Facebook-to-Discord posting logic every hour,
  * but only between 6:00am and 10:00pm server time.
  */
@@ -74,6 +304,14 @@ export function scheduleFacebookToDiscordPosting() {
     // Exam Schedules Channel Webhook URL
     const examSchedulesWebhookUrl = process.env
         .DISCORD_EXAM_SCHEDULES_WEBHOOK_URL as string;
+
+    // Achivements Channel Webhook URL
+    const achievementsWebhookUrl = process.env
+        .DISCORD_ACHIEVEMENTS_WEBHOOK_URL as string;
+
+    // General Channel Webhook URL
+    const generalChatWebhookUrl = process.env
+        .DISCORD_GENERAL_CHAT_WEBHOOK_URL as string;
 
     async function runIfWithinTime() {
         const now = new Date();
@@ -89,21 +327,51 @@ export function scheduleFacebookToDiscordPosting() {
                     // Compose the Discord webhook message payload
                     const payload = await composeDiscordWebhookMessage(post);
 
-                    // Send the post to the announcements channel
-                    await sendDiscordWebhookMessage(
-                        announcementsWebhookUrl,
-                        payload
-                    );
+                    // Check if the post message is about an achievement
+                    // and send to the achievements channel if it is
+                    if (
+                        post.message &&
+                        typeof post.message === "string" &&
+                        isAchievementPost(post.message)
+                    ) {
+                        await sendDiscordWebhookMessage(
+                            achievementsWebhookUrl,
+                            payload
+                        );
+                    }
 
                     // Check if the post message is about an exam schedule
                     // and send to the exam schedules channel if it is
-                    if (
+                    else if (
                         post.message &&
                         typeof post.message === "string" &&
                         isExamSchedulePost(post.message)
                     ) {
                         await sendDiscordWebhookMessage(
                             examSchedulesWebhookUrl,
+                            payload
+                        );
+                    }
+
+                    // Check if the post message is about a birthday
+                    // and send to the exam schedules channel if it is
+                    else if (
+                        post.message &&
+                        typeof post.message === "string" &&
+                        isBirthdayPost(post.message)
+                    ) {
+                        await sendDiscordWebhookMessage(
+                            generalChatWebhookUrl,
+                            payload
+                        );
+                    }
+
+                    // If it's not an achievement or exam schedule post,
+                    // send it to the announcements channel
+                    else {
+                        // Send the post to the announcements channel
+                        await sendDiscordWebhookMessage(
+                            announcementsWebhookUrl,
                             payload
                         );
                     }
