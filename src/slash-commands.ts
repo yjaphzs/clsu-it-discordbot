@@ -162,13 +162,31 @@ export function registerSlashCommands(client: Client) {
                         );
                     }
                 }
-                // Send a summary message to the command invoker
-                return interaction.editReply(
-                    `**Promotion Complete!** 🎉\n\n` +
-                        `A total of **${count} members** have been promoted to their next year level!\n\n` +
-                        `All year level channels have been notified and are ready for a fresh start. ` +
-                        `Let's make this academic year the best one yet—good luck and have fun, everyone! 🚀`
+
+                // Send a promotion complete message with an image
+                const imagePath = require("path").join(
+                    __dirname,
+                    "images",
+                    "promotion-complete.jpg"
                 );
+
+                // Create an attachment for the promotion complete image
+                const attachment = new AttachmentBuilder(imagePath);
+
+                const promotionEmbed = new EmbedBuilder()
+                    .setTitle("Promotion Complete! 🎉")
+                    .setDescription(
+                        `A total of **${count} members** have been promoted to their next year level!\n\n` +
+                            `All year level channels have been notified and are ready for a fresh start.\n` +
+                            `Let's make this academic year the best one yet—good luck and have fun, everyone! 🚀`
+                    )
+                    .setImage("attachment://promotion-complete.jpg")
+                    .setColor("#3eea8b");
+
+                return interaction.editReply({
+                    embeds: [promotionEmbed],
+                    files: [attachment],
+                });
             }
 
             // Handle /promote @user (mention)
@@ -184,12 +202,44 @@ export function registerSlashCommands(client: Client) {
                     });
                 }
                 const promoted = await promoteMember(member);
-                // Reply with a success or failure message
-                return interaction.editReply(
-                    promoted
-                        ? `**Success!** <@${member.user.id}> has leveled up to the next year! 🎓 Give them a warm welcome and wish them luck on their new journey! 🌟`
-                        : `<@${member.user.id}> could not be promoted. They may already be at the highest year level or do not meet the requirements. ⚠️`
-                );
+
+                // Check if the member was promoted
+                if (promoted) {
+                    // Send a promotion complete message with an image
+                    const imagePath = require("path").join(
+                        __dirname,
+                        "images",
+                        "promotion-complete.jpg"
+                    );
+
+                    // Create an attachment for the promotion complete image
+                    const attachment = new AttachmentBuilder(imagePath);
+
+                    // Create the promotion complete embed
+                    const promotionEmbed = new EmbedBuilder()
+                        .setTitle("Promotion Complete! 🎉")
+                        .setDescription(
+                            `<@${member.user.id}> has leveled up to the next year!\n\n` +
+                                `**New Role:** <@&${
+                                    roles.find((r) =>
+                                        member.roles.cache.has(r.id)
+                                    )?.id || "Unknown"
+                                }>\n\n` +
+                                `Give them a warm welcome and wish them luck on their new journey! 🌟`
+                        )
+                        .setImage("attachment://promotion-complete.jpg")
+                        .setColor("#3eea8b");
+
+                    // Send the promotion complete message with the image attachment
+                    return interaction.editReply({
+                        embeds: [promotionEmbed],
+                        files: [attachment],
+                    });
+                } else {
+                    return interaction.editReply(
+                        `<@${member.user.id}> could not be promoted. They may already be at the highest year level or do not meet the requirements. ⚠️`
+                    );
+                }
             }
 
             // Handle /promote <role> (by name, mention, or ID)
@@ -204,12 +254,32 @@ export function registerSlashCommands(client: Client) {
                 for (const member of role.members.values()) {
                     if (await promoteMember(member)) count++;
                 }
-                // Send a summary message to the command invoker
-                return interaction.editReply(
-                    `**Promotion Success!** 🎓\n\n` +
-                        `A total of **${count}** member(s) holding the <@&${role.id}> role have advanced to the next year level! 🚀\n\n` +
-                        `Let's congratulate them as they take on new challenges and adventures. Keep up the great work, everyone! 🎉`
+
+                // Send a promotion complete message with an image
+                const imagePath = require("path").join(
+                    __dirname,
+                    "images",
+                    "promotion-complete.jpg"
                 );
+
+                // Create an attachment for the promotion complete image
+                const attachment = new AttachmentBuilder(imagePath);
+
+                // Create the promotion complete embed
+                const promotionEmbed = new EmbedBuilder()
+                    .setTitle("Promotion Complete! 🎉")
+                    .setDescription(
+                        `A total of **${count}** member(s) holding the <@&${role.id}> role have advanced to the next year level!\n\n` +
+                            `Let's congratulate them as they take on new challenges and adventures. Keep up the great work, everyone! 🚀`
+                    )
+                    .setImage("attachment://promotion-complete.jpg")
+                    .setColor("#3eea8b");
+
+                // Send the promotion complete message with the image attachment
+                return interaction.editReply({
+                    embeds: [promotionEmbed],
+                    files: [attachment],
+                });
             }
 
             // If none of the above, reply with usage help
