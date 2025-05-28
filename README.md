@@ -42,9 +42,6 @@ This bot automates role promotions, event/achievement posting, and more—making
 | `/promote`                  | Promote users by year, user, or role. Usage: `/promote all`, `/promote @user`, `/promote <role>` |
 | `/year-level-member-stats`  | List all members per year level                                                               |
 | `/congratulate-graduates`   | Congratulate all Fourth Year members and start the alumni role process                        |
-| `/fresh-start`              | Send a fresh start message to all year-level channels                                         |
-| `/reset-year-roles`         | Remove all year-level roles from all members                                                  |
-| `/manual-facebook-post`     | Manually post a Facebook post to Discord by post ID                                           |
 
 ### Message Commands (with prefix)
 
@@ -55,9 +52,6 @@ This bot automates role promotions, event/achievement posting, and more—making
 | `it!promote <role>`                   | Promote all members of a specific year level                                                  |
 | `it!year-level-member-stats`          | List all members per year level                                                               |
 | `it!congratulate-graduates`           | Congratulate all Fourth Year members and start the alumni role process                        |
-| `it!fresh-start`                      | Send a fresh start message to all year-level channels                                         |
-| `it!reset-year-roles`                 | Remove all year-level roles from all members                                                  |
-| `it!manual-facebook-post <post_id>`   | Manually post a Facebook post to Discord by post ID                                           |
 
 > Only users with **Administrator** permission can use the promote and management commands.
 
