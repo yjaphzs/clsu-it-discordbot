@@ -1,13 +1,19 @@
 /**
- * CLSU IT Discord Bot for Role Promotion
+ * CLSU IT Discord Bot
  *
- * This bot allows moderators or admins to promote users' year roles in a Discord server.
- * Supported via both legacy message commands and slash commands:
- *   - Promote all users:           /promote all
- *   - Promote a specific user:     /promote @user
- *   - Promote by role:             /promote <role>
+ * A feature-rich Discord bot for the Central Luzon State University (CLSU) IT community.
+ * This bot automates year-level promotions, Facebook event/achievement posting, graduation role transitions,
+ * member stats, and more—making server management and community engagement easier for IT moderators, admins, and students.
  *
- * Only users with Administrator permission can use the promote command.
+ * Features:
+ *   - Promote all users, specific users, or by role (slash & message commands)
+ *   - Automated Facebook to Discord posting (events, achievements, exam schedules, birthdays)
+ *   - Year level member stats and reporting
+ *   - Congratulate graduates with reaction role changer (4th year to alumni)
+ *   - Scheduled and on-demand posting with cron jobs
+ *   - Facebook access token auto-renewal
+ *
+ * Only users with Administrator permission can use the promote and management commands.
  *
  * Author: Jan Bautista
  * Date: May 21, 2025
@@ -23,6 +29,7 @@ import { Client, GatewayIntentBits } from "discord.js";
 // Register slash commands and message commands
 import { registerMessageCommands } from "./message-commands";
 import { registerSlashCommands } from "./slash-commands";
+import { registerFacebookAcessTokenRenewerCronJobs } from "./facebook-access-token-renewer";
 
 // Import the function to schedule Facebook to Discord posting
 import { scheduleFacebookToDiscordPosting } from "./schedule-posting";
@@ -48,5 +55,6 @@ client.once("ready", async () => {
 // Register message commands and slash commands
 registerMessageCommands(client);
 registerSlashCommands(client);
+registerFacebookAcessTokenRenewerCronJobs();
 
 client.login(process.env.BOT_TOKEN);

@@ -1,14 +1,20 @@
 "use strict";
 /**
- * CLSU IT Discord Bot for Role Promotion
+ * CLSU IT Discord Bot
  *
- * This bot allows moderators or admins to promote users' year roles in a Discord server.
- * Supported via both legacy message commands and slash commands:
- *   - Promote all users:           /promote all
- *   - Promote a specific user:     /promote @user
- *   - Promote by role:             /promote <role>
+ * A feature-rich Discord bot for the Central Luzon State University (CLSU) IT community.
+ * This bot automates year-level promotions, Facebook event/achievement posting, graduation role transitions,
+ * member stats, and more—making server management and community engagement easier for IT moderators, admins, and students.
  *
- * Only users with Administrator permission can use the promote command.
+ * Features:
+ *   - Promote all users, specific users, or by role (slash & message commands)
+ *   - Automated Facebook to Discord posting (events, achievements, exam schedules, birthdays)
+ *   - Year level member stats and reporting
+ *   - Congratulate graduates with reaction role changer (4th year to alumni)
+ *   - Scheduled and on-demand posting with cron jobs
+ *   - Facebook access token auto-renewal
+ *
+ * Only users with Administrator permission can use the promote and management commands.
  *
  * Author: Jan Bautista
  * Date: May 21, 2025
@@ -54,6 +60,7 @@ const discord_js_1 = require("discord.js");
 // Register slash commands and message commands
 const message_commands_1 = require("./message-commands");
 const slash_commands_1 = require("./slash-commands");
+const facebook_access_token_renewer_1 = require("./facebook-access-token-renewer");
 // Import the function to schedule Facebook to Discord posting
 const schedule_posting_1 = require("./schedule-posting");
 // Initialize the Discord client with necessary intents
@@ -69,9 +76,10 @@ const client = new discord_js_1.Client({
 // Log when the bot is ready
 client.once("ready", async () => {
     console.log(`Bot online! 🤖\n\nLogged in as ${client.user?.tag} 🚀`);
-    (0, schedule_posting_1.scheduleFacebookToDiscordPosting)();
+    (0, schedule_posting_1.scheduleFacebookToDiscordPosting)(client);
 });
 // Register message commands and slash commands
 (0, message_commands_1.registerMessageCommands)(client);
 (0, slash_commands_1.registerSlashCommands)(client);
+(0, facebook_access_token_renewer_1.registerFacebookAcessTokenRenewerCronJobs)();
 client.login(process.env.BOT_TOKEN);
