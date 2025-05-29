@@ -42,7 +42,7 @@ const client = new Client({
 client.once("ready", async () => {
     console.log(`Bot online! 🤖\n\nLogged in as ${client.user?.tag} 🚀`);
 
-    scheduleFacebookToDiscordPosting();
+    scheduleFacebookToDiscordPosting(client);
 });
 
 // Register message commands and slash commands

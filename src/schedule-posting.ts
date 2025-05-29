@@ -4,6 +4,7 @@ import {
     composeDiscordWebhookMessage,
     sendDiscordWebhookMessage,
 } from "./discord-webhook";
+import { Client, EmbedBuilder, AttachmentBuilder } from "discord.js";
 
 /**
  * Detects if a post message is about an event (tournament, seminar, contest, workshop, etc.)
@@ -412,7 +413,7 @@ export function isBirthdayPost(message: string): boolean {
  * Runs the Facebook-to-Discord posting logic every hour,
  * but only between 6:00am and 10:00pm server time.
  */
-export function scheduleFacebookToDiscordPosting() {
+export function scheduleFacebookToDiscordPosting(client: Client) {
     // Announcements Channel Webhook URL
     const announcementsWebhookUrl = process.env
         .DISCORD_ANNOUNCEMENTS_WEBHOOK_URL as string;
@@ -486,7 +487,7 @@ export function scheduleFacebookToDiscordPosting() {
                     }
 
                     // Check if the post message is about a birthday
-                    // and send to the exam schedules channel if it is
+                    // and send to the general chat channel if it is
                     else if (
                         post.message &&
                         typeof post.message === "string" &&
@@ -496,6 +497,44 @@ export function scheduleFacebookToDiscordPosting() {
                             generalChatWebhookUrl,
                             payload
                         );
+
+                        // Image path for the birthday embed
+                        const imagePath = require("path").join(
+                            __dirname,
+                            "images",
+                            "happy-birthday.jpg"
+                        );
+
+                        // Create an attachment for the birthday image
+                        const attachment = new AttachmentBuilder(imagePath);
+
+                        // Create the birthday embed message
+                        const birthdayEmbed = new EmbedBuilder()
+                            .setTitle("Birthday Alert! 🎉")
+                            .setDescription(
+                                "Let us wish them a happy birthday!\n\n" +
+                                    "May your day be filled with joy, laughter, and all the things that make you happiest. " +
+                                    "The whole IT community celebrates with you today! 🎂🥳"
+                            )
+                            .setImage("attachment://happy-birthday.jpg")
+                            .setColor("#3eea8b");
+
+                        // Fetch the general chat channel
+                        const channelId = process.env
+                            .GENERAL_CHAT_CHANNEL_ID as string;
+                        const channel = await client.channels.fetch(channelId);
+
+                        // If the channel exists and is text-based, send the birthday embed
+                        if (
+                            channel &&
+                            channel.isTextBased() &&
+                            "send" in channel
+                        ) {
+                            await channel.send({
+                                embeds: [birthdayEmbed],
+                                files: [attachment],
+                            });
+                        }
                     }
 
                     // If it's not an achievement or exam schedule post,
