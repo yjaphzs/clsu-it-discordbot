@@ -2,18 +2,22 @@
  * Facebook Access Token Renewer
  * --------------------------------
  * This module manages the automatic renewal of the Facebook long-lived user access token
- * for the CLSU IT Discord Bot. It uses a cron job to attempt renewal every 2 hours on
- * Saturdays and Sundays, but ensures the renewal only happens once per week by tracking
- * the status in a renew.json file (located in the data/ directory).
+ * for the CLSU IT Discord Bot.
  *
- * The renewed token is written to both the .env file and the in-memory environment variable,
- * so the bot can use the new token immediately without requiring a restart.
+ * It checks if today is Saturday and the token has not yet been renewed this week.
+ * If so, it renews the token using the Facebook API, updates both the .env file and the in-memory
+ * environment variable so the bot can use the new token immediately, and sets a flag in renew.json
+ * (located in the data/ directory) to prevent multiple renewals in the same week.
  *
- * The renewed flag is reset every Monday at 12:01 AM, allowing the process to repeat
- * the following weekend.
+ * On Sunday, if the token was already renewed this week, it resets the renewed flag in renew.json
+ * to allow the renewal process to run again the following weekend.
+ *
+ * The renewed flag can also be reset every Monday at 12:01 AM by a separate scheduler if desired.
+ *
+ * Usage: Call the exported function once on bot startup. For repeated execution (e.g., every 2 hours),
+ * use setInterval or an external scheduler to call the function as needed.
  */
 
-import cron from "node-cron";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -68,15 +72,33 @@ function resetRenewedFlag() {
     fs.writeFileSync(renewPath, JSON.stringify(renewData, null, 2));
 }
 
+function isTodaySaturday(): boolean {
+    return new Date().getDay() === 6;
+}
+
+function isTodaySunday(): boolean {
+    return new Date().getDay() === 7;
+}
+
 /**
- * Registers cron jobs for Facebook access token renewal:
- * - Every 2 hours on Saturday: Attempts to renew the token if not already renewed this week.
- * - Every 2 hours on Sunday: Only resets the renewed flag if not yet renewed.
- * - Every Monday at 12:01 AM: Resets the renewed flag for the new week.
+ * Registers logic for Facebook access token renewal and flag reset.
+ *
+ * - On startup, attempts to renew the Facebook long-lived user token if today is Saturday and it has not yet been renewed this week.
+ *   - If renewal is successful, updates both the .env file and the in-memory environment variable so the new token is used immediately.
+ *   - Sets the renewed flag in renew.json to prevent multiple renewals in the same week.
+ *
+ * - Also on startup, if today is Sunday and the token has already been renewed this week, resets the renewed flag in renew.json.
+ *   - This allows the renewal process to run again the following weekend.
+ *
+ * Usage: Call this function once on bot startup. For repeated execution (e.g., every 2 hours), use setInterval or an external scheduler.
  */
 export function registerFacebookAcessTokenRenewerCronJobs() {
-    // Every 2 hours on Saturday (0:00, 2:00, ..., 22:00)
-    cron.schedule("0 */2 * * 6", async () => {
+    /**
+     * Attempts to renew the Facebook token if today is Saturday and not yet renewed this week.
+     * Updates both the .env file and in-memory variable for immediate use.
+     */
+    async function refreshTokenIfSaturday() {
+        if (!isTodaySaturday()) return;
         if (checkAndSetRenewed()) return;
 
         // Renew the Facebook long-lived access token
@@ -98,22 +120,24 @@ export function registerFacebookAcessTokenRenewerCronJobs() {
             console.error("Error during Facebook token renewal:", err);
         }
 
-        console.log("Scheduled job: Saturday every 2 hours (renewed)");
-    });
+        console.log("Token renewal logic executed for Saturday.");
+    }
 
-    // Every 2 hours on Sunday (0:00, 2:00, ..., 22:00)
-    cron.schedule("0 */2 * * 0", async () => {
+    /**
+     * Resets the renewed flag if today is Sunday and the token was already renewed this week.
+     * This allows the renewal process to run again the following weekend.
+     */
+    async function resetRenewedFlagIfSunday() {
+        if (!isTodaySunday()) return;
         if (!checkAndSetRenewed()) return;
 
-        // Optionally reset the renewed flag (or perform other Sunday logic)
+        // Reset the renewed flag for the next week
         resetRenewedFlag();
 
-        console.log("Sunday every 2 hours: Already renewed this week.");
-    });
+        console.log("Renewed flag reset for the new week (Sunday).");
+    }
 
-    // Reset the renewed flag every Monday at 12:01 AM
-    cron.schedule("1 0 * * 1", () => {
-        resetRenewedFlag();
-        console.log("Renewed flag reset for the new week.");
-    });
+    // Run immediately on startup
+    refreshTokenIfSaturday();
+    resetRenewedFlagIfSunday();
 }
