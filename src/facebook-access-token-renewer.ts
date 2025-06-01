@@ -77,7 +77,7 @@ function isTodaySaturday(): boolean {
 }
 
 function isTodaySunday(): boolean {
-    return new Date().getDay() === 7;
+    return new Date().getDay() === 0;
 }
 
 /**
