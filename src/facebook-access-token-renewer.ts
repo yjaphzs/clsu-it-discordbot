@@ -67,7 +67,6 @@ function checkAndSetRenewed(): boolean {
  * allowing the renewal process to run again the following weekend.
  */
 function resetRenewedFlag() {
-    const renewPath = path.join(__dirname, "..", "data", "renew.json");
     const renewData = { renewed: false, lastRenewed: "" };
     fs.writeFileSync(renewPath, JSON.stringify(renewData, null, 2));
 }

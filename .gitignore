@@ -1,6 +1,4 @@
 node_modules/
-dist/data/posted.json
-dist/data/renew.json
 .env
 posted.json
 npm-debug.log*
