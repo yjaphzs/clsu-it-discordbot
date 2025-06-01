@@ -103,7 +103,7 @@ function isTodaySaturday() {
     return new Date().getDay() === 6;
 }
 function isTodaySunday() {
-    return new Date().getDay() === 7;
+    return new Date().getDay() === 0;
 }
 /**
  * Registers logic for Facebook access token renewal and flag reset.
