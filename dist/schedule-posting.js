@@ -409,10 +409,16 @@ function scheduleFacebookToDiscordPosting(client) {
     const generalChatWebhookUrl = process.env
         .DISCORD_GENERAL_CHAT_WEBHOOK_URL;
     async function runIfWithinTime() {
+        console.log("Running Facebook to Discord posting logic...");
         const now = new Date();
-        const hour = now.getHours();
+        const hour = now.toLocaleString("en-US", {
+            hour: "2-digit",
+            hour12: false,
+            timeZone: "Asia/Manila",
+        });
+        console.log(`Current Manila hour: ${hour}`);
         // Only run between 6:00 (6am) and 22:00 (10pm)
-        if (hour >= 6 && hour < 22) {
+        if (parseInt(hour) >= 6 && parseInt(hour) < 22) {
             let postedIds = (0, utils_1.getPostedIds)();
             const posts = await (0, facebook_api_1.getFacebookPagePosts)(30);
             if (posts) {
@@ -483,7 +489,14 @@ function scheduleFacebookToDiscordPosting(client) {
                     (0, utils_1.savePostedId)(post.id);
                     postedIds = (0, utils_1.getPostedIds)();
                 }
+                console.log("Successfully posted new Facebook posts to Discord channels.");
             }
+            else {
+                console.error("No posts found or an error occurred.");
+            }
+        }
+        else {
+            console.log("Current time is outside the posting window (6:00am - 10:00pm). Skipping execution.");
         }
     }
     // Run immediately on startup
