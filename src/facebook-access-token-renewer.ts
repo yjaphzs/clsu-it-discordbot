@@ -21,7 +21,11 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { refreshLongLivedUserToken, updateEnvToken } from "./facebook-api";
+import {
+    getFacebookPagesConfig,
+    refreshLongLivedUserToken,
+    updateEnvToken,
+} from "./facebook-api";
 
 // Resolve the absolute path to the 'data' directory inside the current directory (dist/data at runtime)
 const dataDir = path.resolve(__dirname, "data");
@@ -100,23 +104,30 @@ export function registerFacebookAcessTokenRenewerCronJobs() {
         if (!isTodaySaturday()) return;
         if (checkAndSetRenewed()) return;
 
-        // Renew the Facebook long-lived access token
-        try {
-            const newToken = await refreshLongLivedUserToken();
-            if (newToken) {
-                updateEnvToken(newToken);
-                // Also update the in-memory environment variable for immediate use
-                process.env.FB_LONG_LIVED_USER_TOKEN = newToken;
-                console.log(
-                    "Facebook long-lived user token successfully renewed."
-                );
-            } else {
+        // Renew the Facebook long-lived access token for each configured page
+        const pages = getFacebookPagesConfig();
+        for (const pageConfig of pages) {
+            try {
+                const newToken = await refreshLongLivedUserToken(pageConfig);
+                if (newToken) {
+                    updateEnvToken(newToken, pageConfig.index);
+                    // Also update the in-memory environment variable for immediate use
+                    process.env[`FB${pageConfig.index}_LONG_LIVED_USER_TOKEN`] =
+                        newToken;
+                    console.log(
+                        `Facebook long-lived user token successfully renewed for FB${pageConfig.index}.`
+                    );
+                } else {
+                    console.error(
+                        `Failed to renew Facebook long-lived user token for FB${pageConfig.index}.`
+                    );
+                }
+            } catch (err) {
                 console.error(
-                    "Failed to renew Facebook long-lived user token."
+                    `Error during Facebook token renewal for FB${pageConfig.index}:`,
+                    err
                 );
             }
-        } catch (err) {
-            console.error("Error during Facebook token renewal:", err);
         }
 
         console.log("Token renewal logic executed for Saturday.");

@@ -394,20 +394,7 @@ function isBirthdayPost(message) {
  * but only between 6:00am and 10:00pm server time.
  */
 function scheduleFacebookToDiscordPosting(client) {
-    // Announcements Channel Webhook URL
-    const announcementsWebhookUrl = process.env
-        .DISCORD_ANNOUNCEMENTS_WEBHOOK_URL;
-    // Exam Schedules Channel Webhook URL
-    const examSchedulesWebhookUrl = process.env
-        .DISCORD_EXAM_SCHEDULES_WEBHOOK_URL;
-    // Achivements Channel Webhook URL
-    const achievementsWebhookUrl = process.env
-        .DISCORD_ACHIEVEMENTS_WEBHOOK_URL;
-    // Event Webhook URL
-    const eventWebhookUrl = process.env.DISCORD_EVENTS_WEBHOOK_URL;
-    // General Channel Webhook URL
-    const generalChatWebhookUrl = process.env
-        .DISCORD_GENERAL_CHAT_WEBHOOK_URL;
+    (0, facebook_api_1.upgradeShortLivedTokensIfNeeded)();
     async function runIfWithinTime() {
         console.log("Running Facebook to Discord posting logic...");
         const now = new Date();
@@ -420,80 +407,84 @@ function scheduleFacebookToDiscordPosting(client) {
         // Only run between 6:00 (6am) and 22:00 (10pm)
         if (parseInt(hour) >= 6 && parseInt(hour) < 22) {
             let postedIds = (0, utils_1.getPostedIds)();
-            const posts = await (0, facebook_api_1.getFacebookPagePosts)(30);
-            if (posts) {
-                for (const post of posts) {
-                    if (postedIds.includes(post.id))
-                        continue;
-                    // Compose the Discord webhook message payload
-                    const payload = await (0, discord_webhook_1.composeDiscordWebhookMessage)(post);
-                    // Check if the post message is about an achievement
-                    // and send to the achievements channel if it is
-                    if (post.message &&
-                        typeof post.message === "string" &&
-                        isAchievementPost(post.message)) {
-                        await (0, discord_webhook_1.sendDiscordWebhookMessage)(achievementsWebhookUrl, payload);
-                    }
-                    // Check if the post message is about an event
-                    // and send to the events channel if it is
-                    else if (post.message &&
-                        typeof post.message === "string" &&
-                        isEventPost(post.message)) {
-                        await (0, discord_webhook_1.sendDiscordWebhookMessage)(eventWebhookUrl, payload);
-                    }
-                    // Check if the post message is about an exam schedule
-                    // and send to the exam schedules channel if it is
-                    else if (post.message &&
-                        typeof post.message === "string" &&
-                        isExamSchedulePost(post.message)) {
-                        await (0, discord_webhook_1.sendDiscordWebhookMessage)(examSchedulesWebhookUrl, payload);
-                    }
-                    // Check if the post message is about a birthday
-                    // and send to the general chat channel if it is
-                    else if (post.message &&
-                        typeof post.message === "string" &&
-                        isBirthdayPost(post.message)) {
-                        await (0, discord_webhook_1.sendDiscordWebhookMessage)(generalChatWebhookUrl, payload);
-                        // Image path for the birthday embed
-                        const imagePath = require("path").join(__dirname, "images", "happy-birthday.jpg");
-                        // Create an attachment for the birthday image
-                        const attachment = new discord_js_1.AttachmentBuilder(imagePath);
-                        // Create the birthday embed message
-                        const birthdayEmbed = new discord_js_1.EmbedBuilder()
-                            .setTitle("Birthday Alert! 🎉")
-                            .setDescription("Let us wish them a happy birthday!\n\n" +
-                            "May your day be filled with joy, laughter, and all the things that make you happiest. " +
-                            "The whole IT community celebrates with you today! 🎂🥳")
-                            .setImage("attachment://happy-birthday.jpg")
-                            .setColor("#3eea8b");
-                        // Fetch the general chat channel
-                        const channelId = process.env
-                            .GENERAL_CHAT_CHANNEL_ID;
-                        const channel = await client.channels.fetch(channelId);
-                        // If the channel exists and is text-based, send the birthday embed
-                        if (channel &&
-                            channel.isTextBased() &&
-                            "send" in channel) {
-                            await channel.send({
-                                embeds: [birthdayEmbed],
-                                files: [attachment],
-                            });
+            // Loop through all configured Facebook pages
+            const pages = (0, facebook_api_1.getFacebookPagesConfig)();
+            for (const pageConfig of pages) {
+                const posts = await (0, facebook_api_1.getFacebookPagePosts)(pageConfig, 30);
+                console.log(posts);
+                if (posts) {
+                    for (const post of posts) {
+                        if (postedIds.includes(post.id))
+                            continue;
+                        // Compose the Discord webhook message payload
+                        const payload = await (0, discord_webhook_1.composeDiscordWebhookMessage)(post);
+                        // Check if the post message is about an achievement
+                        // and send to the achievements channel if it is
+                        if (post.message &&
+                            typeof post.message === "string" &&
+                            isAchievementPost(post.message)) {
+                            await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_ACHIEVEMENTS_WEBHOOK_URL, payload);
                         }
+                        // Check if the post message is about an event
+                        // and send to the events channel if it is
+                        else if (post.message &&
+                            typeof post.message === "string" &&
+                            isEventPost(post.message)) {
+                            await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_EVENTS_WEBHOOK_URL, payload);
+                        }
+                        // Check if the post message is about an exam schedule
+                        // and send to the exam schedules channel if it is
+                        else if (post.message &&
+                            typeof post.message === "string" &&
+                            isExamSchedulePost(post.message)) {
+                            await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_EXAM_SCHEDULES_WEBHOOK_URL, payload);
+                        }
+                        // Check if the post message is about a birthday
+                        // and send to the general chat channel if it is
+                        else if (post.message &&
+                            typeof post.message === "string" &&
+                            isBirthdayPost(post.message)) {
+                            await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_GENERAL_CHAT_WEBHOOK_URL, payload);
+                            // Image path for the birthday embed
+                            const imagePath = require("path").join(__dirname, "images", "happy-birthday.jpg");
+                            // Create an attachment for the birthday image
+                            const attachment = new discord_js_1.AttachmentBuilder(imagePath);
+                            // Create the birthday embed message
+                            const birthdayEmbed = new discord_js_1.EmbedBuilder()
+                                .setTitle("Birthday Alert! 🎉")
+                                .setDescription("Let us wish them a happy birthday!\n\n" +
+                                "May your day be filled with joy, laughter, and all the things that make you happiest. " +
+                                "The whole IT community celebrates with you today! 🎂🥳")
+                                .setImage("attachment://happy-birthday.jpg")
+                                .setColor("#3eea8b");
+                            // Fetch the general chat channel
+                            const channelId = process.env
+                                .GENERAL_CHAT_CHANNEL_ID;
+                            const channel = await client.channels.fetch(channelId);
+                            // If the channel exists and is text-based, send the birthday embed
+                            if (channel &&
+                                channel.isTextBased() &&
+                                "send" in channel) {
+                                await channel.send({
+                                    embeds: [birthdayEmbed],
+                                    files: [attachment],
+                                });
+                            }
+                        }
+                        // If it's not an achievement, event, exam schedule, or birthday post,
+                        // send it to the announcements channel
+                        else {
+                            await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL, payload);
+                        }
+                        (0, utils_1.savePostedId)(post.id);
+                        postedIds = (0, utils_1.getPostedIds)();
                     }
-                    // If it's not an achievement or exam schedule post,
-                    // send it to the announcements channel
-                    else {
-                        // Send the post to the announcements channel
-                        await (0, discord_webhook_1.sendDiscordWebhookMessage)(announcementsWebhookUrl, payload);
-                    }
-                    (0, utils_1.savePostedId)(post.id);
-                    postedIds = (0, utils_1.getPostedIds)();
                 }
-                console.log("Successfully posted new Facebook posts to Discord channels.");
+                else {
+                    console.error(`No posts found or an error occurred for FB${pageConfig.index}.`);
+                }
             }
-            else {
-                console.error("No posts found or an error occurred.");
-            }
+            console.log("Successfully posted new Facebook posts to Discord channels.");
         }
         else {
             console.log("Current time is outside the posting window (6:00am - 10:00pm). Skipping execution.");

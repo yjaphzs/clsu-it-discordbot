@@ -41,43 +41,119 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getFacebookPagesConfig = getFacebookPagesConfig;
+exports.upgradeShortLivedTokensIfNeeded = upgradeShortLivedTokensIfNeeded;
 exports.refreshLongLivedUserToken = refreshLongLivedUserToken;
 exports.getPageAccessToken = getPageAccessToken;
 exports.updateEnvToken = updateEnvToken;
 exports.updateEnvPageToken = updateEnvPageToken;
 exports.getFacebookPagePosts = getFacebookPagePosts;
-exports.getSharedPosts = getSharedPosts;
-exports.fetchSharedPostImage = fetchSharedPostImage;
 const dotenv = __importStar(require("dotenv"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 // Use built-in fetch in Node 18+, otherwise import node-fetch
-const fetch = global.fetch ? global.fetch : require("node-fetch");
+const fetch = global.fetch
+    ? global.fetch
+    : require("node-fetch");
 dotenv.config();
-const FB_GRAPH_API_VERSION = process.env.FB_GRAPH_API_VERSION;
-const FB_APP_ID = process.env.FB_APP_ID;
-const FB_APP_SECRET = process.env.FB_APP_SECRET;
-const FB_USER_ID = process.env.FB_USER_ID;
-const FB_PAGE_ID = process.env.FB_PAGE_ID;
-const FB_LONG_LIVED_TOKEN = process.env.FB_LONG_LIVED_USER_TOKEN;
+/**
+ * Helper to get all configured Facebook pages from the environment.
+ * Returns an array of page configs, one for each FB page.
+ */
+function getFacebookPagesConfig() {
+    const pageIndexes = (process.env.FB_PAGES || "1")
+        .split(",")
+        .map((s) => s.trim());
+    return pageIndexes.map((idx) => ({
+        index: idx,
+        GRAPH_API_VERSION: process.env[`FB${idx}_GRAPH_API_VERSION`],
+        APP_ID: process.env[`FB${idx}_APP_ID`],
+        APP_SECRET: process.env[`FB${idx}_APP_SECRET`],
+        USER_ID: process.env[`FB${idx}_USER_ID`],
+        PAGE_ID: process.env[`FB${idx}_PAGE_ID`],
+        LONG_LIVED_TOKEN: process.env[`FB${idx}_LONG_LIVED_USER_TOKEN`],
+        DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: process.env[`FB${idx}_DISCORD_ANNOUNCEMENTS_WEBHOOK_URL`],
+        DISCORD_EXAM_SCHEDULES_WEBHOOK_URL: process.env[`FB${idx}_DISCORD_EXAM_SCHEDULES_WEBHOOK_URL`],
+        DISCORD_ACHIEVEMENTS_WEBHOOK_URL: process.env[`FB${idx}_DISCORD_ACHIEVEMENTS_WEBHOOK_URL`],
+        DISCORD_EVENTS_WEBHOOK_URL: process.env[`FB${idx}_DISCORD_EVENTS_WEBHOOK_URL`],
+        DISCORD_GENERAL_CHAT_WEBHOOK_URL: process.env[`FB${idx}_DISCORD_GENERAL_CHAT_WEBHOOK_URL`],
+    }));
+}
+/**
+ * Checks all FB pages in the environment for a SHORT_LIVED_USER_TOKEN (and no LONG_LIVED_USER_TOKEN),
+ * exchanges it for a long-lived user token, updates the .env file, and removes the short-lived token.
+ * Call this function on startup if you want to auto-upgrade tokens.
+ */
+async function upgradeShortLivedTokensIfNeeded() {
+    const envPath = path.resolve(__dirname, "../.env");
+    let envContent = fs.readFileSync(envPath, "utf8");
+    let updated = false;
+    const pages = getFacebookPagesConfig();
+    for (const pageConfig of pages) {
+        const shortTokenKey = `FB${pageConfig.index}_SHORT_LIVED_USER_TOKEN`;
+        const longTokenKey = `FB${pageConfig.index}_LONG_LIVED_USER_TOKEN`;
+        const shortToken = process.env[shortTokenKey];
+        const longToken = process.env[longTokenKey];
+        if (shortToken && !longToken) {
+            // Exchange short-lived token for long-lived token
+            const url = `https://graph.facebook.com/${pageConfig.GRAPH_API_VERSION}/oauth/access_token` +
+                `?grant_type=fb_exchange_token` +
+                `&client_id=${pageConfig.APP_ID}` +
+                `&client_secret=${pageConfig.APP_SECRET}` +
+                `&fb_exchange_token=${shortToken}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.access_token) {
+                    // Update .env: set long-lived token, remove short-lived token
+                    const longTokenRegex = new RegExp(`${longTokenKey}=.*`, "g");
+                    const shortTokenRegex = new RegExp(`${shortTokenKey}=.*`, "g");
+                    if (envContent.match(longTokenRegex)) {
+                        envContent = envContent.replace(longTokenRegex, `${longTokenKey}=${data.access_token}`);
+                    }
+                    else {
+                        envContent += `\n${longTokenKey}=${data.access_token}`;
+                    }
+                    // Remove the short-lived token line
+                    envContent = envContent.replace(shortTokenRegex, `${shortTokenKey}=`);
+                    // Update process.env for immediate use
+                    process.env[longTokenKey] = data.access_token;
+                    process.env[shortTokenKey] = "";
+                    updated = true;
+                    console.log(`Upgraded FB${pageConfig.index} short-lived token to long-lived token.`);
+                }
+                else {
+                    console.error(`Failed to upgrade short-lived token for FB${pageConfig.index}:`, data);
+                }
+            }
+            catch (err) {
+                console.error(`Error upgrading short-lived token for FB${pageConfig.index}:`, err);
+            }
+        }
+    }
+    if (updated) {
+        fs.writeFileSync(envPath, envContent, "utf8");
+        console.log(".env file updated with new long-lived tokens.");
+    }
+}
 /**
  * Refresh the Facebook long-lived user access token.
  * Returns the new token if successful, or null if failed.
  */
-async function refreshLongLivedUserToken() {
-    const url = `https://graph.facebook.com/${FB_GRAPH_API_VERSION}/oauth/access_token` +
+async function refreshLongLivedUserToken(pageConfig) {
+    const url = `https://graph.facebook.com/${pageConfig.GRAPH_API_VERSION}/oauth/access_token` +
         `?grant_type=fb_exchange_token` +
-        `&client_id=${FB_APP_ID}` +
-        `&client_secret=${FB_APP_SECRET}` +
-        `&fb_exchange_token=${FB_LONG_LIVED_TOKEN}`;
+        `&client_id=${pageConfig.APP_ID}` +
+        `&client_secret=${pageConfig.APP_SECRET}` +
+        `&fb_exchange_token=${pageConfig.LONG_LIVED_TOKEN}`;
     const res = await fetch(url);
     const data = await res.json();
     if (data.access_token) {
-        console.log("Refreshed long-lived user token:", data.access_token);
+        console.log(`Refreshed long-lived user token for FB${pageConfig.index}:`, data.access_token);
         return data.access_token;
     }
     else {
-        console.error("Failed to refresh token:", data);
+        console.error(`Failed to refresh token for FB${pageConfig.index}:`, data);
         return null;
     }
 }
@@ -85,17 +161,17 @@ async function refreshLongLivedUserToken() {
  * Get the page access token for the configured Facebook Page.
  * Returns the page access token if found, or null if not found.
  */
-async function getPageAccessToken() {
-    const url = `https://graph.facebook.com/${FB_GRAPH_API_VERSION}/${FB_USER_ID}/accounts?access_token=${FB_LONG_LIVED_TOKEN}`;
+async function getPageAccessToken(pageConfig) {
+    const url = `https://graph.facebook.com/${pageConfig.GRAPH_API_VERSION}/${pageConfig.USER_ID}/accounts?access_token=${pageConfig.LONG_LIVED_TOKEN}`;
     const res = await fetch(url);
     const data = await res.json();
-    const page = data.data?.find((page) => page.id === FB_PAGE_ID);
+    const page = data.data?.find((page) => page.id === pageConfig.PAGE_ID);
     if (page && page.access_token) {
-        console.log("Page Access Token:", page.access_token);
+        console.log(`Page Access Token for FB${pageConfig.index}:`, page.access_token);
         return page.access_token;
     }
     else {
-        console.error("Error: Page with the specified FB_PAGE_ID not found or missing access_token.");
+        console.error(`Error: Page with the specified FB${pageConfig.index}_PAGE_ID not found or missing access_token.`);
         return null;
     }
 }
@@ -103,12 +179,13 @@ async function getPageAccessToken() {
  * Update the FB_LONG_LIVED_USER_TOKEN in the .env file.
  * Overwrites the existing token line with the new token.
  */
-function updateEnvToken(newToken) {
+function updateEnvToken(newToken, pageIndex) {
     const envPath = path.resolve(__dirname, "../.env");
     let envContent = fs.readFileSync(envPath, "utf8");
-    envContent = envContent.replace(/FB_LONG_LIVED_USER_TOKEN=.*/g, `FB_LONG_LIVED_USER_TOKEN=${newToken}`);
+    const regex = new RegExp(`FB${pageIndex}_LONG_LIVED_USER_TOKEN=.*`, "g");
+    envContent = envContent.replace(regex, `FB${pageIndex}_LONG_LIVED_USER_TOKEN=${newToken}`);
     fs.writeFileSync(envPath, envContent, "utf8");
-    console.log("Updated .env with new long-lived user token.");
+    console.log(`Updated .env with new long-lived user token for FB${pageIndex}.`);
 }
 /**
  * Update the FB_PAGE_ACCESS_TOKEN in the .env file.
@@ -130,73 +207,37 @@ function updateEnvPageToken(newPageToken) {
  * Fetch the latest posts from the configured Facebook Page.
  * Returns an array of post objects or null if an error occurs.
  */
-async function getFacebookPagePosts(limit = 10) {
-    if (!FB_PAGE_ID) {
-        console.error("FB_PAGE_ID is missing in .env");
+async function getFacebookPagePosts(pageConfig, limit = 10) {
+    if (!pageConfig.PAGE_ID) {
+        console.error(`FB${pageConfig.index}_PAGE_ID is missing in .env`);
         return null;
     }
-    const pageAccessToken = await getPageAccessToken();
+    const pageAccessToken = await getPageAccessToken(pageConfig);
     if (!pageAccessToken) {
-        console.error("Failed to retrieve Page Access Token.");
+        console.error(`Failed to retrieve Page Access Token for FB${pageConfig.index}.`);
         return null;
     }
     const fields = "id,child_attachments,message,full_picture,attachments{media,target},permalink_url,properties,created_time,is_published,status_type";
-    const url = `https://graph.facebook.com/${FB_GRAPH_API_VERSION}/${FB_PAGE_ID}/posts?fields=${fields}&access_token=${pageAccessToken}&limit=${limit}`;
+    const url = `https://graph.facebook.com/${pageConfig.GRAPH_API_VERSION}/${pageConfig.PAGE_ID}/posts?fields=${fields}&access_token=${pageAccessToken}&limit=${limit}`;
     try {
         const res = await fetch(url);
         const data = await res.json();
         if (data.error) {
-            console.error("Error fetching Facebook posts:", data.error);
+            console.error(`Error fetching Facebook posts for FB${pageConfig.index}:`, data.error);
             return null;
         }
         const now = new Date();
         const fiveDaysAgo = new Date(now);
-        fiveDaysAgo.setDate(now.getDate() - 5);
+        fiveDaysAgo.setDate(now.getDate() - 7);
         const postsWithAttachments = (data.data || []).filter((post) => post.attachments &&
             post.attachments.data &&
             new Date(post.created_time) >= fiveDaysAgo);
-        postsWithAttachments.sort((a, b) => new Date(a.created_time).getTime() - new Date(b.created_time).getTime());
+        postsWithAttachments.sort((a, b) => new Date(a.created_time).getTime() -
+            new Date(b.created_time).getTime());
         return postsWithAttachments;
     }
     catch (err) {
-        console.error("Fetch error:", err);
+        console.error(`Fetch error for FB${pageConfig.index}:`, err);
         return null;
     }
-}
-/**
- * Fetch posts that have shared the given post (sharedposts edge).
- * @param postId - The ID of the original post.
- * @param pageAccessToken - The Facebook Page Access Token.
- * @param limit - Number of shared posts to fetch.
- * @returns Array of shared post objects.
- */
-async function getSharedPosts(postId, pageAccessToken, limit = 10) {
-    const fields = "id,message,created_time,permalink_url,full_picture";
-    const url = `https://graph.facebook.com/${FB_GRAPH_API_VERSION}/${postId}/sharedposts?fields=${fields}&access_token=${pageAccessToken}&limit=${limit}`;
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.error) {
-            console.error("Error fetching shared posts:", data.error);
-            return [];
-        }
-        return data.data || [];
-    }
-    catch (err) {
-        console.error("Fetch error:", err);
-        return [];
-    }
-}
-/**
- * Fetch the full_picture (image) of a post by its ID.
- * @param postId - The ID of the post.
- * @param pageAccessToken - The Facebook Page Access Token.
- * @returns The image URL or null if not found.
- */
-async function fetchSharedPostImage(postId, pageAccessToken) {
-    const fields = "full_picture";
-    const url = `https://graph.facebook.com/v19.0/${postId}?fields=${fields}&access_token=${pageAccessToken}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.full_picture || null;
 }

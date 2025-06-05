@@ -67,6 +67,10 @@ function savePostedId(id) {
     const ids = getPostedIds();
     if (!ids.includes(id)) {
         ids.push(id);
+        // If the total IDs exceed 500, remove the oldest ones
+        if (ids.length > 500) {
+            ids.splice(0, ids.length - 500);
+        }
         fs.writeFileSync(postedPath, JSON.stringify(ids, null, 2));
     }
 }

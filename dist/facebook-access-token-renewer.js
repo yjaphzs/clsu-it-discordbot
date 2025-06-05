@@ -126,21 +126,25 @@ function registerFacebookAcessTokenRenewerCronJobs() {
             return;
         if (checkAndSetRenewed())
             return;
-        // Renew the Facebook long-lived access token
-        try {
-            const newToken = await (0, facebook_api_1.refreshLongLivedUserToken)();
-            if (newToken) {
-                (0, facebook_api_1.updateEnvToken)(newToken);
-                // Also update the in-memory environment variable for immediate use
-                process.env.FB_LONG_LIVED_USER_TOKEN = newToken;
-                console.log("Facebook long-lived user token successfully renewed.");
+        // Renew the Facebook long-lived access token for each configured page
+        const pages = (0, facebook_api_1.getFacebookPagesConfig)();
+        for (const pageConfig of pages) {
+            try {
+                const newToken = await (0, facebook_api_1.refreshLongLivedUserToken)(pageConfig);
+                if (newToken) {
+                    (0, facebook_api_1.updateEnvToken)(newToken, pageConfig.index);
+                    // Also update the in-memory environment variable for immediate use
+                    process.env[`FB${pageConfig.index}_LONG_LIVED_USER_TOKEN`] =
+                        newToken;
+                    console.log(`Facebook long-lived user token successfully renewed for FB${pageConfig.index}.`);
+                }
+                else {
+                    console.error(`Failed to renew Facebook long-lived user token for FB${pageConfig.index}.`);
+                }
             }
-            else {
-                console.error("Failed to renew Facebook long-lived user token.");
+            catch (err) {
+                console.error(`Error during Facebook token renewal for FB${pageConfig.index}:`, err);
             }
-        }
-        catch (err) {
-            console.error("Error during Facebook token renewal:", err);
         }
         console.log("Token renewal logic executed for Saturday.");
     }
