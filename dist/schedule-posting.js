@@ -97,6 +97,14 @@ function isEventPost(message) {
         "#universityweek",
         "#sikad",
         "#uweek",
+        "colloquium",
+        "research colloquium",
+        "capstone presentation",
+        "panel session",
+        "guest panel",
+        "conference room",
+        "presentation of projects",
+        "celebration of",
     ];
     for (const keyword of eventKeywords) {
         if (lower.includes(keyword))
@@ -404,33 +412,32 @@ function scheduleFacebookToDiscordPosting(client) {
             timeZone: "Asia/Manila",
         });
         console.log(`Current Manila hour: ${hour}`);
-        // Only run between 6:00 (6am) and 22:00 (10pm)
-        if (parseInt(hour) >= 6 && parseInt(hour) < 22) {
+        // Only run between 6:00 (6am) and 24:00 (12pm)
+        if (parseInt(hour) >= 6 && parseInt(hour) < 24) {
             let postedIds = (0, utils_1.getPostedIds)();
             // Loop through all configured Facebook pages
             const pages = (0, facebook_api_1.getFacebookPagesConfig)();
             for (const pageConfig of pages) {
                 const posts = await (0, facebook_api_1.getFacebookPagePosts)(pageConfig, 30);
-                console.log(posts);
                 if (posts) {
                     for (const post of posts) {
                         if (postedIds.includes(post.id))
                             continue;
                         // Compose the Discord webhook message payload
                         const payload = await (0, discord_webhook_1.composeDiscordWebhookMessage)(post);
-                        // Check if the post message is about an achievement
-                        // and send to the achievements channel if it is
-                        if (post.message &&
-                            typeof post.message === "string" &&
-                            isAchievementPost(post.message)) {
-                            await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_ACHIEVEMENTS_WEBHOOK_URL, payload);
-                        }
                         // Check if the post message is about an event
                         // and send to the events channel if it is
-                        else if (post.message &&
+                        if (post.message &&
                             typeof post.message === "string" &&
                             isEventPost(post.message)) {
                             await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_EVENTS_WEBHOOK_URL, payload);
+                        }
+                        // Check if the post message is about an achievement
+                        // and send to the achievements channel if it is
+                        else if (post.message &&
+                            typeof post.message === "string" &&
+                            isAchievementPost(post.message)) {
+                            await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_ACHIEVEMENTS_WEBHOOK_URL, payload);
                         }
                         // Check if the post message is about an exam schedule
                         // and send to the exam schedules channel if it is
@@ -487,7 +494,7 @@ function scheduleFacebookToDiscordPosting(client) {
             console.log("Successfully posted new Facebook posts to Discord channels.");
         }
         else {
-            console.log("Current time is outside the posting window (6:00am - 10:00pm). Skipping execution.");
+            console.log("Current time is outside the posting window (6:00am - 12:00pm). Skipping execution.");
         }
     }
     // Run immediately on startup
