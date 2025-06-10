@@ -549,7 +549,10 @@ export function scheduleFacebookToDiscordPosting(client: Client) {
 
                         // If it's not an achievement, event, exam schedule, or birthday post,
                         // send it to the announcements channel
-                        else {
+                        else if (
+                            post.message &&
+                            typeof post.message === "string"
+                        ) {
                             await sendDiscordWebhookMessage(
                                 pageConfig.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL,
                                 payload
