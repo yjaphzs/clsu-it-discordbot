@@ -19,9 +19,21 @@ async function composeDiscordWebhookMessage(post, color = 0x4289db) {
     const url = post.permalink_url || "";
     const image = post.full_picture || null;
     // Extract the title: first sentence before a dot or newline
-    let title = content.split(/[\.\n]/)[0].trim();
+    let title = content
+        ? content.split(/[\.\n]/)[0].trim()
+        : null;
     if (!title)
         title = null;
+    let description = "";
+    if (content) {
+        description = `[**${title}**](${url})\n\n${content}`;
+    }
+    else if (image) {
+        description = `[View on Facebook](${url})\n\n📷 New announcement with image.`;
+    }
+    else {
+        description = `[View on Facebook](${url})`;
+    }
     // Format the timestamp to a more readable format (not used in payload, but kept for reference)
     let formattedTime = "";
     if (post.created_time) {
@@ -37,11 +49,11 @@ async function composeDiscordWebhookMessage(post, color = 0x4289db) {
     }
     // Discord webhook payload structure
     const payload = {
-        content: "", // No plain content, everything is in the embed
+        content: "",
         embeds: [
             {
                 url: url,
-                description: `[**${title}**](${url})\n\n${content}`,
+                description: description,
                 color: color,
                 timestamp: post.created_time,
             },
