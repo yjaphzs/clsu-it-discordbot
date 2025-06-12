@@ -10,17 +10,34 @@ import {
 } from "./discord-webhook";
 import { Client, EmbedBuilder, AttachmentBuilder } from "discord.js";
 
+function normalizeText(text: string): string {
+    // Remove diacritics and convert stylized Unicode to ASCII where possible
+    return text
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[\u{1d400}-\u{1d7ff}]/gu, (c) =>
+            String.fromCharCode(c.charCodeAt(0) - 0x1d400 + 0x41)
+        )
+        .replace(/[^\x00-\x7F]/g, "") // Remove any remaining non-ASCII
+        .toLowerCase();
+}
+
 /**
  * Detects if a post message is about an event (tournament, seminar, contest, workshop, etc.)
  */
 export function isEventPost(message: string): boolean {
     if (!message) return false;
 
-    const lower = message.toLowerCase();
+    const lower = normalizeText(message);
 
     // Common event-related keywords and phrases
     const eventKeywords = [
         "event",
+        "keynote",
+        "session",
+        "talk",
+        "panel",
+        "conference room",
         "tournament",
         "match schedule",
         "match lineup",
@@ -144,7 +161,17 @@ export function isEventPost(message: string): boolean {
 export function isAchievementPost(message: string): boolean {
     if (!message) return false;
 
-    const lower = message.toLowerCase();
+    const lower = normalizeText(message);
+
+    // Exclude generic photo recaps from achievements
+    if (
+        (lower.startsWith("in photo") || lower.startsWith("in photos")) &&
+        !/(best|award|winner|champion|presenter|poster|paper|recognition|congratulations|congrats)/.test(
+            lower
+        )
+    ) {
+        return false;
+    }
 
     // Keywords for achievements
     const achievementKeywords = [
@@ -209,6 +236,13 @@ export function isAchievementPost(message: string): boolean {
         "distinction",
         "excellence",
         "outstanding",
+        "best presenter",
+        "best capstone",
+        "best paper",
+        "best poster",
+        "award",
+        "awarded",
+        "recognition",
         "best in",
         "best paper",
         "best project",
@@ -328,7 +362,7 @@ export function isExamSchedulePost(message: string): boolean {
     if (!message) return false;
 
     // Normalize for easier matching
-    const lower = message.toLowerCase();
+    const lower = normalizeText(message);
 
     // Keywords and patterns to match
     const examKeywords = [
@@ -384,7 +418,7 @@ export function isExamSchedulePost(message: string): boolean {
 export function isBirthdayPost(message: string): boolean {
     if (!message) return false;
 
-    const lower = message.toLowerCase();
+    const lower = normalizeText(message);
 
     // Common birthday keywords and phrases
     const birthdayKeywords = [
@@ -456,20 +490,20 @@ export function scheduleFacebookToDiscordPosting(client: Client) {
                         );
 
                         if (post.message && typeof post.message === "string") {
-                            // Check if the post message is about an event
-                            // and send to the events channel if it is
-                            if (isEventPost(post.message)) {
+                            // Check if the post message is about an achievement
+                            // and send to the achievements channel if it is
+                            if (isAchievementPost(post.message)) {
                                 await sendDiscordWebhookMessage(
-                                    pageConfig.DISCORD_EVENTS_WEBHOOK_URL,
+                                    pageConfig.DISCORD_ACHIEVEMENTS_WEBHOOK_URL,
                                     payload
                                 );
                             }
 
-                            // Check if the post message is about an achievement
-                            // and send to the achievements channel if it is
-                            else if (isAchievementPost(post.message)) {
+                            // Check if the post message is about an event
+                            // and send to the events channel if it is
+                            else if (isEventPost(post.message)) {
                                 await sendDiscordWebhookMessage(
-                                    pageConfig.DISCORD_ACHIEVEMENTS_WEBHOOK_URL,
+                                    pageConfig.DISCORD_EVENTS_WEBHOOK_URL,
                                     payload
                                 );
                             }
