@@ -30,6 +30,20 @@ export function isEventPost(message: string): boolean {
 
     const lower = normalizeText(message);
 
+    const sentences = lower.split(/[.!?]/);
+    for (const sentence of sentences) {
+        // Check if the sentence contains keywords related to announcements
+        if (
+            (sentence.includes("adviser") ||
+                sentence.includes("advisers") ||
+                sentence.includes("advisor") ||
+                sentence.includes("advisors")) &&
+            (sentence.includes("meet") || sentence.includes("the new"))
+        ) {
+            return false;
+        }
+    }
+
     // Common event-related keywords and phrases
     const eventKeywords = [
         "event",
