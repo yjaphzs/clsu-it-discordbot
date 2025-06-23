@@ -400,6 +400,19 @@ export function isExamSchedulePost(message: string): boolean {
     // Normalize for easier matching
     const lower = normalizeText(message);
 
+    const sentences = lower.split(/[.!?]/);
+    for (const sentence of sentences) {
+        // Check if the sentence contains keywords related to announcements
+        if (
+            sentence.includes("submit") ||
+            sentence.includes("submission") ||
+            (sentence.includes("gathering names") &&
+                (sentence.includes("scholar") || sentence.includes("achiever")))
+        ) {
+            return false;
+        }
+    }
+
     // Keywords and patterns to match
     const examKeywords = [
         "exam schedule",
@@ -455,6 +468,19 @@ export function isBirthdayPost(message: string): boolean {
     if (!message) return false;
 
     const lower = normalizeText(message);
+
+    const sentences = lower.split(/[.!?]/);
+    for (const sentence of sentences) {
+        // Check if the sentence contains keywords related to announcements
+        if (
+            sentence.includes("submit") ||
+            sentence.includes("submission") ||
+            (sentence.includes("gathering names") &&
+                (sentence.includes("scholar") || sentence.includes("achiever")))
+        ) {
+            return false;
+        }
+    }
 
     // Common birthday keywords and phrases
     const birthdayKeywords = [
