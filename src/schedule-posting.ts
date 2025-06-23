@@ -42,6 +42,15 @@ export function isEventPost(message: string): boolean {
         ) {
             return false;
         }
+
+        if (
+            sentence.includes("submit") ||
+            sentence.includes("submission") ||
+            (sentence.includes("gathering names") &&
+                (sentence.includes("scholar") || sentence.includes("achiever")))
+        ) {
+            return false;
+        }
     }
 
     // Common event-related keywords and phrases
@@ -185,6 +194,19 @@ export function isAchievementPost(message: string): boolean {
         )
     ) {
         return false;
+    }
+
+    const sentences = lower.split(/[.!?]/);
+    for (const sentence of sentences) {
+        // Check if the sentence contains keywords related to announcements
+        if (
+            sentence.includes("submit") ||
+            sentence.includes("submission") ||
+            (sentence.includes("gathering names") &&
+                (sentence.includes("scholar") || sentence.includes("achiever")))
+        ) {
+            return false;
+        }
     }
 
     // Keywords for achievements

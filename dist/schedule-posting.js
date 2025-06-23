@@ -25,6 +25,23 @@ function isEventPost(message) {
     if (!message)
         return false;
     const lower = normalizeText(message);
+    const sentences = lower.split(/[.!?]/);
+    for (const sentence of sentences) {
+        // Check if the sentence contains keywords related to announcements
+        if ((sentence.includes("adviser") ||
+            sentence.includes("advisers") ||
+            sentence.includes("advisor") ||
+            sentence.includes("advisors")) &&
+            (sentence.includes("meet") || sentence.includes("the new"))) {
+            return false;
+        }
+        if (sentence.includes("submit") ||
+            sentence.includes("submission") ||
+            (sentence.includes("gathering names") &&
+                (sentence.includes("scholar") || sentence.includes("achiever")))) {
+            return false;
+        }
+    }
     // Common event-related keywords and phrases
     const eventKeywords = [
         "event",
@@ -154,6 +171,16 @@ function isAchievementPost(message) {
     if ((lower.startsWith("in photo") || lower.startsWith("in photos")) &&
         !/(best|award|winner|champion|presenter|poster|paper|recognition|congratulations|congrats)/.test(lower)) {
         return false;
+    }
+    const sentences = lower.split(/[.!?]/);
+    for (const sentence of sentences) {
+        // Check if the sentence contains keywords related to announcements
+        if (sentence.includes("submit") ||
+            sentence.includes("submission") ||
+            (sentence.includes("gathering names") &&
+                (sentence.includes("scholar") || sentence.includes("achiever")))) {
+            return false;
+        }
     }
     // Keywords for achievements
     const achievementKeywords = [

@@ -104,6 +104,8 @@ function registerMessageCommands(client) {
                     if (member.roles.cache.has(roles[i].id)) {
                         await member.roles.remove(roles[i].id);
                         await member.roles.add(roles[i + 1].id);
+                        // Log the member's name and the from/to roles
+                        console.log(`Promoted: ${member.user.tag} from "${roles[i].name}" to "${roles[i + 1].name}"`);
                         return true;
                     }
                 }
@@ -134,6 +136,7 @@ function registerMessageCommands(client) {
             ];
             // Handle "it!promote all"
             if (target.toLowerCase() === "all") {
+                console.log("Starting promotion for all members...");
                 let count = 0;
                 for (let i = roles.length - 2; i >= 0; i--) {
                     const fromRole = guild.roles.cache.get(roles[i].id);
