@@ -9,6 +9,8 @@ const utils_1 = require("./utils");
 const facebook_api_1 = require("./facebook-api");
 const discord_webhook_1 = require("./discord-webhook");
 const discord_js_1 = require("discord.js");
+const ai_classifier_1 = require("./ai-classifier");
+const aiClassifier = new ai_classifier_1.PostClassifier();
 function normalizeText(text) {
     // Remove diacritics and convert stylized Unicode to ASCII where possible
     return text
@@ -17,6 +19,35 @@ function normalizeText(text) {
         .replace(/[\u{1d400}-\u{1d7ff}]/gu, (c) => String.fromCharCode(c.charCodeAt(0) - 0x1d400 + 0x41))
         .replace(/[^\x00-\x7F]/g, "") // Remove any remaining non-ASCII
         .toLowerCase();
+}
+async function classifyPostWithAI(message) {
+    // First try quick keyword-based classification (faster and free)
+    const quickResult = aiClassifier.quickClassify(message);
+    if (quickResult) {
+        console.log(`Quick classified as: ${quickResult}`);
+        return quickResult;
+    }
+    // Use AI for ambiguous cases
+    const aiResult = await aiClassifier.classifyPost(message);
+    if (aiResult && aiResult.confidence >= 70) { // Only trust high-confidence results
+        console.log(`AI classified as: ${aiResult.category} (confidence: ${aiResult.confidence}%)`);
+        return aiResult.category;
+    }
+    // Fallback to existing keyword-based methods
+    console.log('Falling back to existing classification methods');
+    return getKeywordBasedClassification(message);
+}
+// Fallback function using your existing methods
+function getKeywordBasedClassification(message) {
+    if (isBirthdayPost(message))
+        return 'BIRTHDAY';
+    if (isAchievementPost(message))
+        return 'ACHIEVEMENT';
+    if (isEventPost(message))
+        return 'EVENT';
+    if (isExamSchedulePost(message))
+        return 'EXAM_SCHEDULE';
+    return 'ANNOUNCEMENT';
 }
 /**
  * Detects if a post message is about an event (tournament, seminar, contest, workshop, etc.)
@@ -39,6 +70,43 @@ function isEventPost(message) {
             sentence.includes("submission") ||
             (sentence.includes("gathering names") &&
                 (sentence.includes("scholar") || sentence.includes("achiever")))) {
+            return false;
+        }
+    }
+    const announcementExclusions = [
+        "student organizations",
+        "student leaders",
+        "get to know",
+        "getting to know",
+        "meet the team",
+        "discover your",
+        "official governing body",
+        "adding and changing of subjects",
+        "shifters",
+        "transferees",
+        "old bsit students",
+        "adding of subjects",
+        "changing of subjects",
+        "memorandum",
+        "memo",
+        "schedule",
+        "please be informed",
+        "advisory",
+        "announcement",
+        "notice",
+    ];
+    for (const exclusion of announcementExclusions) {
+        if (lower.includes(exclusion)) {
+            return false;
+        }
+    }
+    const birthdayExclusions = [
+        "happy birthday",
+        "happiest birthday",
+        "birthday",
+    ];
+    for (const exclusion of birthdayExclusions) {
+        if (lower.includes(exclusion)) {
             return false;
         }
     }
@@ -179,6 +247,57 @@ function isAchievementPost(message) {
             sentence.includes("submission") ||
             (sentence.includes("gathering names") &&
                 (sentence.includes("scholar") || sentence.includes("achiever")))) {
+            return false;
+        }
+    }
+    const announcementExclusions = [
+        "student organizations",
+        "student leaders",
+        "get to know",
+        "getting to know",
+        "meet the team",
+        "discover your",
+        "official governing body",
+        "adding and changing of subjects",
+        "shifters",
+        "transferees",
+        "old bsit students",
+        "adding of subjects",
+        "changing of subjects",
+        "memorandum",
+        "memo",
+        "schedule",
+        "please be informed",
+        "advisory",
+        "announcement",
+        "notice",
+    ];
+    for (const exclusion of announcementExclusions) {
+        if (lower.includes(exclusion)) {
+            return false;
+        }
+    }
+    const eventExclusions = [
+        "orientation",
+        "welcoming new",
+        "new bsit students",
+        "hii tech",
+        "get ready to connect",
+        "mark your calendars",
+        "academic year"
+    ];
+    for (const exclusion of eventExclusions) {
+        if (lower.includes(exclusion)) {
+            return false;
+        }
+    }
+    const birthdayExclusions = [
+        "happy birthday",
+        "happiest birthday",
+        "birthday",
+    ];
+    for (const exclusion of birthdayExclusions) {
+        if (lower.includes(exclusion)) {
             return false;
         }
     }
@@ -376,6 +495,43 @@ function isExamSchedulePost(message) {
             return false;
         }
     }
+    const announcementExclusions = [
+        "student organizations",
+        "student leaders",
+        "get to know",
+        "getting to know",
+        "meet the team",
+        "discover your",
+        "official governing body",
+        "adding and changing of subjects",
+        "shifters",
+        "transferees",
+        "old bsit students",
+        "adding of subjects",
+        "changing of subjects",
+        "memorandum",
+        "memo",
+        "schedule",
+        "please be informed",
+        "advisory",
+        "announcement",
+        "notice",
+    ];
+    for (const exclusion of announcementExclusions) {
+        if (lower.includes(exclusion)) {
+            return false;
+        }
+    }
+    const birthdayExclusions = [
+        "happy birthday",
+        "happiest birthday",
+        "birthday",
+    ];
+    for (const exclusion of birthdayExclusions) {
+        if (lower.includes(exclusion)) {
+            return false;
+        }
+    }
     // Keywords and patterns to match
     const examKeywords = [
         "exam schedule",
@@ -438,6 +594,33 @@ function isBirthdayPost(message) {
             return false;
         }
     }
+    const announcementExclusions = [
+        "student organizations",
+        "student leaders",
+        "get to know",
+        "getting to know",
+        "meet the team",
+        "discover your",
+        "official governing body",
+        "adding and changing of subjects",
+        "shifters",
+        "transferees",
+        "old bsit students",
+        "adding of subjects",
+        "changing of subjects",
+        "memorandum",
+        "memo",
+        "schedule",
+        "please be informed",
+        "advisory",
+        "announcement",
+        "notice",
+    ];
+    for (const exclusion of announcementExclusions) {
+        if (lower.includes(exclusion)) {
+            return false;
+        }
+    }
     // Common birthday keywords and phrases
     const birthdayKeywords = [
         "happy birthday",
@@ -496,58 +679,44 @@ function scheduleFacebookToDiscordPosting(client) {
                     for (const post of posts) {
                         if (postedIds.includes(post.id))
                             continue;
-                        // Compose the Discord webhook message payload
                         const payload = await (0, discord_webhook_1.composeDiscordWebhookMessage)(post);
                         if (post.message && typeof post.message === "string") {
-                            // Check if the post message is about an achievement
-                            // and send to the achievements channel if it is
-                            if (isAchievementPost(post.message)) {
-                                await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_ACHIEVEMENTS_WEBHOOK_URL, payload);
-                            }
-                            // Check if the post message is about an event
-                            // and send to the events channel if it is
-                            else if (isEventPost(post.message)) {
-                                await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_EVENTS_WEBHOOK_URL, payload);
-                            }
-                            // Check if the post message is about an exam schedule
-                            // and send to the exam schedules channel if it is
-                            else if (isExamSchedulePost(post.message)) {
-                                await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_EXAM_SCHEDULES_WEBHOOK_URL, payload);
-                            }
-                            // Check if the post message is about a birthday
-                            // and send to the general chat channel if it is
-                            else if (isBirthdayPost(post.message)) {
-                                await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_GENERAL_CHAT_WEBHOOK_URL, payload);
-                                // Image path for the birthday embed
-                                const imagePath = require("path").join(__dirname, "images", "happy-birthday.jpg");
-                                // Create an attachment for the birthday image
-                                const attachment = new discord_js_1.AttachmentBuilder(imagePath);
-                                // Create the birthday embed message
-                                const birthdayEmbed = new discord_js_1.EmbedBuilder()
-                                    .setTitle("Birthday Alert! 🎉")
-                                    .setDescription("Let us wish them a happy birthday!\n\n" +
-                                    "May your day be filled with joy, laughter, and all the things that make you happiest. " +
-                                    "The whole IT community celebrates with you today! 🎂🥳")
-                                    .setImage("attachment://happy-birthday.jpg")
-                                    .setColor("#3eea8b");
-                                // Fetch the general chat channel
-                                const channelId = process.env
-                                    .GENERAL_CHAT_CHANNEL_ID;
-                                const channel = await client.channels.fetch(channelId);
-                                // If the channel exists and is text-based, send the birthday embed
-                                if (channel &&
-                                    channel.isTextBased() &&
-                                    "send" in channel) {
-                                    await channel.send({
-                                        embeds: [birthdayEmbed],
-                                        files: [attachment],
-                                    });
-                                }
-                            }
-                            // If it's not an achievement, event, exam schedule, or birthday post,
-                            // send it to the announcements channel
-                            else {
-                                await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL, payload);
+                            // Use AI-enhanced classification
+                            const category = await classifyPostWithAI(normalizeText(post.message));
+                            console.log(`Post classified as: ${category}`);
+                            switch (category) {
+                                case 'BIRTHDAY':
+                                    await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_GENERAL_CHAT_WEBHOOK_URL, payload);
+                                    // Existing birthday embed logic
+                                    const imagePath = require("path").join(__dirname, "images", "happy-birthday.jpg");
+                                    const attachment = new discord_js_1.AttachmentBuilder(imagePath);
+                                    const birthdayEmbed = new discord_js_1.EmbedBuilder()
+                                        .setTitle("Birthday Alert! 🎉")
+                                        .setDescription("Let us wish them a happy birthday!\n\n" +
+                                        "May your day be filled with joy, laughter, and all the things that make you happiest. " +
+                                        "The whole IT community celebrates with you today! 🎂🥳")
+                                        .setImage("attachment://happy-birthday.jpg")
+                                        .setColor("#3eea8b");
+                                    const channelId = process.env.GENERAL_CHAT_CHANNEL_ID;
+                                    const channel = await client.channels.fetch(channelId);
+                                    if (channel && channel.isTextBased() && "send" in channel) {
+                                        await channel.send({
+                                            embeds: [birthdayEmbed],
+                                            files: [attachment],
+                                        });
+                                    }
+                                    break;
+                                case 'ACHIEVEMENT':
+                                    await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_ACHIEVEMENTS_WEBHOOK_URL, payload);
+                                    break;
+                                case 'EVENT':
+                                    await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_EVENTS_WEBHOOK_URL, payload);
+                                    break;
+                                case 'EXAM_SCHEDULE':
+                                    await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_EXAM_SCHEDULES_WEBHOOK_URL, payload);
+                                    break;
+                                default:
+                                    await (0, discord_webhook_1.sendDiscordWebhookMessage)(pageConfig.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL, payload);
                             }
                         }
                         (0, utils_1.savePostedId)(post.id);

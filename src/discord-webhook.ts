@@ -4,6 +4,9 @@
  * If an image is available, it is included in the embed.
  */
 
+import fetch from "node-fetch";
+import { Readable } from "stream";
+
 export interface FacebookPost {
     message?: string;
     permalink_url?: string;
@@ -97,7 +100,7 @@ export async function composeDiscordWebhookMessage(
  */
 export async function sendDiscordWebhookMessage(
     webhookUrl: string,
-    payload: DiscordWebhookPayload
+    payload: DiscordWebhookPayload,
 ): Promise<void> {
     const res = await fetch(webhookUrl, {
         method: "POST",
